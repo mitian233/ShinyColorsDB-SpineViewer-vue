@@ -13,35 +13,8 @@ import { RouterView } from 'vue-router'
 }
 
 * {
-  font-family: Meiryo, Arial, Helvetica, sans-serif;
-}
-
-div span {
-  color: #fff;
-  padding: 4px;
-}
-
-select,
-option {
-  font-family: 'LINESEED';
-}
-
-.form-select {
-  padding: 0.5rem 2.25rem 0.375rem 1rem;
-  outline: none;
-}
-
-select:focus {
-  box-shadow: 0 0 3pt 2pt #569ce2;
-}
-
-.form-input {
-  border-radius: 0.4rem;
-  box-shadow: none;
-}
-
-.form-input:focus {
-  outline: none !important;
+  box-sizing: border-box;
+  font-family: 'LINESEED', 'Meiryo', Arial, Helvetica, sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -63,6 +36,8 @@ select:focus {
 body {
   margin: 0;
   padding: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
 }
 
