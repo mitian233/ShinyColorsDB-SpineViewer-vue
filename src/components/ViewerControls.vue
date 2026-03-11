@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NColorPicker, NDivider, NSpace, NSelect, NSwitch } from 'naive-ui'
+import { NButton, NColorPicker, NDivider, NSpace, NSelect, NSwitch, NText } from 'naive-ui'
 import type { ViewerSelectGroupOption, ViewerSelectOption } from '../composables/useViewerShared'
 
 const props = withDefaults(
@@ -35,31 +35,81 @@ const emit = defineEmits<{
 
 <template>
   <n-space vertical :size="12">
-    <div class="field-title">Idol</div>
+    <n-text
+      depth="3"
+      style="
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      "
+    >
+      Idol
+    </n-text>
     <n-select
       :value="props.idolId"
       :options="props.idolOptions"
       @update:value="(value) => emit('update:idol', value)"
     />
 
-    <div class="field-title">Dress</div>
+    <n-text
+      depth="3"
+      style="
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      "
+    >
+      Dress
+    </n-text>
     <n-select
       :value="props.selectedDressIndex"
       :options="props.dressOptions"
       @update:value="(value) => emit('update:dress', value)"
     />
 
-    <div class="field-title">Type</div>
+    <n-text
+      depth="3"
+      style="
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      "
+    >
+      Type
+    </n-text>
     <n-select
       :value="props.dressType"
       :options="props.typeOptions"
       @update:value="(value) => emit('update:type', value)"
     />
 
-    <div class="field-title">Animation</div>
+    <n-text
+      depth="3"
+      style="
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      "
+    >
+      Animation
+    </n-text>
     <n-button type="primary" block @click="emit('openAnimation')">Animation List</n-button>
 
-    <div class="field-title">Background Color</div>
+    <n-text
+      depth="3"
+      style="
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      "
+    >
+      Background Color
+    </n-text>
     <n-color-picker
       :value="props.backgroundColor"
       :show-alpha="false"
@@ -84,13 +134,3 @@ const emit = defineEmits<{
     </template>
   </n-space>
 </template>
-
-<style scoped>
-.field-title {
-  font-size: 0.83rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-</style>

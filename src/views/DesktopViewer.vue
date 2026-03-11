@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   NAlert,
   NButton,
@@ -7,6 +7,9 @@ import {
   NConfigProvider,
   NDrawer,
   NDrawerContent,
+  NLayout,
+  NLayoutSider,
+  NLayoutContent,
   NModal,
   NSpace,
   NSpin,
@@ -16,9 +19,14 @@ import AnimationPanel from '../components/AnimationPanel.vue'
 import CanvasStage from '../components/CanvasStage.vue'
 import ViewerControls from '../components/ViewerControls.vue'
 import { useViewerShared } from '../composables/useViewerShared'
+import { naiveThemeOverrides } from '../theme/naiveTheme'
 
 const canvasStageRef = ref<InstanceType<typeof CanvasStage> | null>(null)
 const canvasElementRef = computed(() => canvasStageRef.value?.canvasRef ?? null)
+const showMenuDrawer = ref(false)
+const viewportWidth = ref(window.innerWidth)
+const SIDEBAR_BREAKPOINT = 1280
+const isWideLayout = computed(() => viewportWidth.value >= SIDEBAR_BREAKPOINT)
 
 const {
   animations,
@@ -53,157 +61,170 @@ const {
 function toMobileUI() {
   window.location.href = 'https://mspine.shinycolors.moe'
 }
+
+function handleResize() {
+  viewportWidth.value = window.innerWidth
+}
+
+watch(isWideLayout, (wide) => {
+  if (wide) {
+    showMenuDrawer.value = false
+  }
+})
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <template>
-  <n-config-provider>
-    <div class="desktop-viewer">
-      <n-modal v-model:show="showWebGLModal" :mask-closable="false">
-        <n-card title="Legacy Mode Detected" role="dialog" aria-modal="true" class="modal-card">
-          <n-text>Hardware acceleration is required for PIXI.js to run in WebGL mode.</n-text>
-          <template #action>
-            <n-space justify="end">
-              <n-button type="primary" @click="showWebGLModal = false">閉じる</n-button>
-            </n-space>
-          </template>
-        </n-card>
-      </n-modal>
+  <n-config-provider :theme-overrides="naiveThemeOverrides">
+    <n-layout has-sider style="height: 100vh">
+      <n-layout-sider
+        v-if="isWideLayout"
+        bordered
+        :width="320"
+        :collapsed-width="0"
+        content-style="padding: 16px; overflow-y: auto"
+      >
+        <ViewerControls
+          :idol-id="idolId ?? null"
+          :selected-dress-index="selectedDressIndex"
+          :dress-type="dressType ?? null"
+          :background-color="backgroundColor"
+          :idol-options="idolOptions"
+          :dress-options="dressOptions"
+          :type-options="typeOptions"
+          :continuous-shooting-enabled="isContinuousShootingEnabled"
+          @update:idol="updateIdol"
+          @update:dress="updateDress"
+          @update:type="updateType"
+          @update:background-color="handleColorChange"
+          @update:continuous-shooting-enabled="handleContinuousShootingChange"
+          @open-animation="showAnimationDrawer = true"
+          @open-database="openDatabase"
+          @open-thanks="showThanksModal = true"
+          @share="handleShare"
+          @save="handleSave"
+        />
+      </n-layout-sider>
 
-      <n-modal v-model:show="showMobilePrompt" :mask-closable="false">
-        <n-card title="Mobile Device Detected" role="dialog" aria-modal="true" class="modal-card">
-          <n-text>Mobile Device Detected, redirect to mobile UI?</n-text>
-          <template #action>
-            <n-space justify="end">
-              <n-button @click="showMobilePrompt = false">No</n-button>
-              <n-button type="primary" @click="toMobileUI">Yes</n-button>
-            </n-space>
-          </template>
-        </n-card>
-      </n-modal>
+      <n-layout-content>
+        <n-button
+          v-if="!isWideLayout"
+          style="position: absolute; top: 16px; left: 16px; z-index: 20"
+          @click="showMenuDrawer = true"
+        >
+          Controls
+        </n-button>
+        <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
+        <n-spin
+          v-if="loading"
+          style="
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        />
+        <n-alert
+          v-if="error"
+          type="error"
+          title="Load Failed"
+          style="position: absolute; left: 16px; right: 16px; bottom: 16px"
+        >
+          {{ error.message }}
+        </n-alert>
+      </n-layout-content>
+    </n-layout>
 
-      <n-modal v-model:show="showThanksModal">
-        <n-card title="特別感謝" role="dialog" aria-modal="true" class="modal-card">
-          <n-space vertical :size="8">
-            <n-text strong>技術諮詢</n-text>
-            <n-text>TWY</n-text>
-            <n-text strong>爆肝小夥伴</n-text>
-            <n-text>木下梨花 KaiOuO Lycoris 剎那 十秒十六胎 匿名小夥伴一號</n-text>
+    <n-modal v-model:show="showWebGLModal" :mask-closable="false">
+      <n-card title="Legacy Mode Detected" style="width: min(560px, calc(100vw - 2rem))">
+        <n-text>Hardware acceleration is required for PIXI.js to run in WebGL mode.</n-text>
+        <template #action>
+          <n-space justify="end">
+            <n-button type="primary" @click="showWebGLModal = false">閉じる</n-button>
           </n-space>
-          <template #action>
-            <n-space justify="end">
-              <n-button @click="showThanksModal = false">閉じる</n-button>
-            </n-space>
-          </template>
-        </n-card>
-      </n-modal>
+        </template>
+      </n-card>
+    </n-modal>
 
-      <n-drawer v-model:show="showAnimationDrawer" placement="left" :width="360">
-        <n-drawer-content title="Animation">
-          <AnimationPanel
-            :animations="animations"
-            @toggle="handleAnimationToggle"
-            @reset="handleAnimationReset"
-            @close="showAnimationDrawer = false"
-          />
-        </n-drawer-content>
-      </n-drawer>
+    <n-modal v-model:show="showMobilePrompt" :mask-closable="false">
+      <n-card title="Mobile Device Detected" style="width: min(560px, calc(100vw - 2rem))">
+        <n-text>Mobile Device Detected, redirect to mobile UI?</n-text>
+        <template #action>
+          <n-space justify="end">
+            <n-button @click="showMobilePrompt = false">No</n-button>
+            <n-button type="primary" @click="toMobileUI">Yes</n-button>
+          </n-space>
+        </template>
+      </n-card>
+    </n-modal>
 
-      <div v-if="showCopiedToast" class="copied-toast">
-        <n-alert type="success" title="Copied" :show-icon="false">Link is copied!</n-alert>
-      </div>
+    <n-modal v-model:show="showThanksModal">
+      <n-card title="特別感謝" style="width: min(560px, calc(100vw - 2rem))">
+        <n-space vertical :size="8">
+          <n-text strong>技術諮詢</n-text>
+          <n-text>TWY</n-text>
+          <n-text strong>爆肝小夥伴</n-text>
+          <n-text>木下梨花 KaiOuO Lycoris 剎那 十秒十六胎 匿名小夥伴一號</n-text>
+        </n-space>
+        <template #action>
+          <n-space justify="end">
+            <n-button @click="showThanksModal = false">閉じる</n-button>
+          </n-space>
+        </template>
+      </n-card>
+    </n-modal>
 
-      <div class="main-container">
-        <aside class="sidebar">
-          <ViewerControls
-            :idol-id="idolId ?? null"
-            :selected-dress-index="selectedDressIndex"
-            :dress-type="dressType ?? null"
-            :background-color="backgroundColor"
-            :idol-options="idolOptions"
-            :dress-options="dressOptions"
-            :type-options="typeOptions"
-            :continuous-shooting-enabled="isContinuousShootingEnabled"
-            @update:idol="updateIdol"
-            @update:dress="updateDress"
-            @update:type="updateType"
-            @update:background-color="handleColorChange"
-            @update:continuous-shooting-enabled="handleContinuousShootingChange"
-            @open-animation="showAnimationDrawer = true"
-            @open-database="openDatabase"
-            @open-thanks="showThanksModal = true"
-            @share="handleShare"
-            @save="handleSave"
-          />
-        </aside>
+    <n-drawer v-model:show="showAnimationDrawer" placement="right" :width="360">
+      <n-drawer-content title="Animation" closable>
+        <AnimationPanel
+          :animations="animations"
+          @toggle="handleAnimationToggle"
+          @reset="handleAnimationReset"
+          @close="showAnimationDrawer = false"
+        />
+      </n-drawer-content>
+    </n-drawer>
 
-        <section class="canvas-container">
-          <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
-          <div v-if="loading" class="status-mask">
-            <n-spin size="large" />
-          </div>
-          <div v-if="error" class="status-error">
-            <n-alert type="error" title="Load Failed">{{ error.message }}</n-alert>
-          </div>
-        </section>
-      </div>
-    </div>
+    <n-drawer v-model:show="showMenuDrawer" placement="left" width="min(360px, 88vw)">
+      <n-drawer-content title="Controls" :closable="!isWideLayout">
+        <ViewerControls
+          :idol-id="idolId ?? null"
+          :selected-dress-index="selectedDressIndex"
+          :dress-type="dressType ?? null"
+          :background-color="backgroundColor"
+          :idol-options="idolOptions"
+          :dress-options="dressOptions"
+          :type-options="typeOptions"
+          :continuous-shooting-enabled="isContinuousShootingEnabled"
+          @update:idol="updateIdol"
+          @update:dress="updateDress"
+          @update:type="updateType"
+          @update:background-color="handleColorChange"
+          @update:continuous-shooting-enabled="handleContinuousShootingChange"
+          @open-animation="showAnimationDrawer = true"
+          @open-database="openDatabase"
+          @open-thanks="showThanksModal = true"
+          @share="handleShare"
+          @save="handleSave"
+        />
+      </n-drawer-content>
+    </n-drawer>
+
+    <n-alert
+      v-if="showCopiedToast"
+      type="success"
+      title="Copied"
+      style="position: fixed; right: 16px; bottom: 16px; z-index: 50; width: 240px"
+    >
+      Link is copied!
+    </n-alert>
   </n-config-provider>
 </template>
-
-<style scoped>
-.desktop-viewer {
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(120deg, #0f172a 0%, #192339 40%, #202b3d 100%);
-  overflow: hidden;
-}
-
-.main-container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
-.sidebar {
-  width: min(360px, 32vw);
-  min-width: 260px;
-  height: 100%;
-  overflow-y: auto;
-  padding: 1rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(12, 17, 28, 0.75);
-  backdrop-filter: blur(8px);
-}
-
-.canvas-container {
-  position: relative;
-  flex: 1;
-}
-
-.status-mask {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(15, 23, 42, 0.35);
-}
-
-.status-error {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 1rem;
-}
-
-.copied-toast {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 50;
-  width: 240px;
-}
-
-.modal-card {
-  width: min(560px, calc(100vw - 2rem));
-}
-</style>
