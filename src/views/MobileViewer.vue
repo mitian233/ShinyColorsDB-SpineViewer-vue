@@ -79,7 +79,7 @@ const showMenuDrawer = ref(false)
       </n-alert>
 
       <n-space
-        class="absolute right-3 bottom-3 left-3 z-20 rounded-2xl border border-slate-200/80 bg-white/88 p-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md"
+        class="absolute right-3 bottom-3 left-3 z-20 rounded-sm border border-slate-200/80 bg-white/88 p-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md"
         justify="space-between"
       >
         <n-button class="min-w-20" @click="showMenuDrawer = true">Menu</n-button>
