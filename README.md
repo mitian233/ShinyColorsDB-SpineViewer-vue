@@ -1,3 +1,3 @@
 # ShinyColorsDB-SpineViewer-vue
 
-![pasted-image-1772980597943.webp](https://files.seeusercontent.com/2026/03/08/ug3X/pasted-image-1772980597943.webp)
+![pasted-image-1773239439104.webp](https://files.seeusercontent.com/2026/03/11/w8fZ/pasted-image-1773239439104.webp)
