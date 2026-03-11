@@ -29,11 +29,34 @@ type UseViewerSharedOptions = {
   detectMobilePrompt?: boolean
 }
 
+const DRESS_TYPE_FIELDS: Array<{ value: DressTypeKey; field: keyof DressInfo }> = [
+  { value: 'sml_cloth0', field: 'sml_Cloth0' },
+  { value: 'sml_cloth1', field: 'sml_Cloth1' },
+  { value: 'big_cloth0', field: 'big_Cloth0' },
+  { value: 'big_cloth1', field: 'big_Cloth1' },
+]
+
+const DRESS_TYPE_FALLBACK_ORDER: DressTypeKey[] = [
+  'big_cloth0',
+  'big_cloth1',
+  'sml_cloth0',
+  'sml_cloth1',
+]
+
 export function useViewerShared(
   canvasElementRef: Ref<HTMLCanvasElement | null>,
   options: UseViewerSharedOptions = {}
 ) {
-  const { idolId, enzaId, dressType, renderer, urlFlag, getShareLink } = useUrlState()
+  const {
+    idolId,
+    enzaId,
+    dressType,
+    renderer,
+    backgroundColor,
+    continuousShootingEnabled,
+    urlFlag,
+    getShareLink,
+  } = useUrlState()
   const { idolInfoMap, idolDressMap, fetchIdolList, fetchDressList, getIdolName } = useIdolData()
 
   const {
@@ -49,6 +72,8 @@ export function useViewerShared(
     setBackgroundColor,
     toggleAnimation,
   } = useSpineRuntime(canvasElementRef, renderer)
+
+  isContinuousShootingEnabled.value = continuousShootingEnabled.value
 
   const idolList = computed<IdolInfo[]>(() => {
     if (!idolInfoMap.value) return []
@@ -94,7 +119,6 @@ export function useViewerShared(
   )
 
   const selectedDressIndex = ref(0)
-  const backgroundColor = ref('#000000')
 
   const currentDress = computed<DressInfo | undefined>(
     () => dressList.value[selectedDressIndex.value]
@@ -102,38 +126,17 @@ export function useViewerShared(
 
   const typeList = computed(() => {
     if (!currentDress.value) return []
-    const dress = currentDress.value
-    return [
-      {
-        value: 'sml_cloth0' as DressTypeKey,
-        label: DRESS_TYPE_LABELS.sml_cloth0,
-        available: !!dress.sml_Cloth0,
-      },
-      {
-        value: 'sml_cloth1' as DressTypeKey,
-        label: DRESS_TYPE_LABELS.sml_cloth1,
-        available: !!dress.sml_Cloth1,
-      },
-      {
-        value: 'big_cloth0' as DressTypeKey,
-        label: DRESS_TYPE_LABELS.big_cloth0,
-        available: !!dress.big_Cloth0,
-      },
-      {
-        value: 'big_cloth1' as DressTypeKey,
-        label: DRESS_TYPE_LABELS.big_cloth1,
-        available: !!dress.big_Cloth1,
-      },
-    ]
+    return resolveAvailableDressTypes(currentDress.value).map((value) => ({
+      value,
+      label: DRESS_TYPE_LABELS[value],
+    }))
   })
 
   const typeOptions = computed<ViewerSelectOption[]>(() =>
-    typeList.value
-      .filter((item) => item.available)
-      .map((item) => ({
-        label: item.label,
-        value: item.value,
-      }))
+    typeList.value.map((item) => ({
+      label: item.label,
+      value: item.value,
+    }))
   )
 
   const { copyLinkToClipboard, saveImage } = useExport(
@@ -192,25 +195,30 @@ export function useViewerShared(
   }
 
   function getDefaultDressType(dress: DressInfo): DressTypeKey {
-    if (dress.big_Cloth0) return 'big_cloth0'
-    if (dress.big_Cloth1) return 'big_cloth1'
-    if (dress.sml_Cloth0) return 'sml_cloth0'
-    return 'sml_cloth1'
+    return resolveAvailableDressTypes(dress)[0] ?? 'big_cloth0'
   }
 
   async function loadCurrentSpine() {
     const dress = currentDress.value
     if (!dress) return
 
-    const type = dressType.value ?? getDefaultDressType(dress)
+    enzaId.value = dress.enzaId
+
+    const availableTypes = resolveAvailableDressTypes(dress)
+    const type =
+      dressType.value && availableTypes.includes(dressType.value)
+        ? dressType.value
+        : getDefaultDressType(dress)
     dressType.value = type
 
     if (dress.idolId === 0 && dress.path) {
       await loadSpine(dress.path, type, true)
+      setBackgroundColor(backgroundColor.value)
       return
     }
 
     await loadSpine(dress.enzaId, type)
+    setBackgroundColor(backgroundColor.value)
   }
 
   async function handleIdolChange(newIdolId: number) {
@@ -288,11 +296,16 @@ export function useViewerShared(
   }
 
   function handleContinuousShootingChange(enabled: boolean) {
+    continuousShootingEnabled.value = enabled
     isContinuousShootingEnabled.value = enabled
   }
 
   watch(backgroundColor, (color) => {
     setBackgroundColor(color)
+  })
+
+  watch(continuousShootingEnabled, (enabled) => {
+    isContinuousShootingEnabled.value = enabled
   })
 
   onMounted(() => {
@@ -328,4 +341,13 @@ export function useViewerShared(
     updateIdol,
     updateType,
   }
+}
+function resolveAvailableDressTypes(dress: DressInfo | undefined): DressTypeKey[] {
+  if (!dress) return []
+
+  const availableTypes = DRESS_TYPE_FIELDS.filter(({ field }) => Boolean(dress[field])).map(
+    ({ value }) => value
+  )
+
+  return availableTypes.length > 0 ? availableTypes : DRESS_TYPE_FALLBACK_ORDER
 }

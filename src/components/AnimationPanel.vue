@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NDivider, NScrollbar, NSpace, NThing } from 'naive-ui'
+import { NButton, NCheckbox, NDivider, NScrollbar, NSpace } from 'naive-ui'
 import type { AnimationItem } from '../types'
 
 const props = defineProps<{
