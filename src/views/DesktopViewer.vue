@@ -1,539 +1,226 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import CanvasStage from '../components/CanvasStage.vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  NAlert,
+  NButton,
+  NCard,
+  NDrawer,
+  NDrawerContent,
+  NLayout,
+  NLayoutSider,
+  NLayoutContent,
+  NModal,
+  NSpace,
+  NSpin,
+  NText,
+} from 'naive-ui'
 import AnimationPanel from '../components/AnimationPanel.vue'
-import { useIdolData } from '../composables/useIdolData'
-import { useUrlState } from '../composables/useUrlState'
-import { useSpineRuntime } from '../composables/useSpineRuntime'
-import { useExport } from '../composables/useExport'
-import type { DressTypeKey, DressInfo, IdolInfo } from '../types'
-import { DRESS_TYPE_LABELS } from '../types'
-
-declare global {
-  interface Window {
-    PIXI: any
-  }
-}
+import CanvasStage from '../components/CanvasStage.vue'
+import ViewerControls from '../components/ViewerControls.vue'
+import { useViewerShared } from '../composables/useViewerShared'
 
 const canvasStageRef = ref<InstanceType<typeof CanvasStage> | null>(null)
-
-const { idolId, enzaId, dressType, renderer, urlFlag, getShareLink } = useUrlState()
-
-const { idolInfoMap, idolDressMap, fetchIdolList, fetchDressList, getIdolName } = useIdolData()
+const canvasElementRef = computed(() => canvasStageRef.value?.canvasRef ?? null)
+const showMenuDrawer = ref(false)
+const viewportWidth = ref(window.innerWidth)
+const SIDEBAR_BREAKPOINT = 1280
+const isWideLayout = computed(() => viewportWidth.value >= SIDEBAR_BREAKPOINT)
 
 const {
-  app,
-  container,
   animations,
+  backgroundColor,
+  dressOptions,
+  dressType,
+  error,
+  handleAnimationReset,
+  handleAnimationToggle,
+  handleColorChange,
+  handleContinuousShootingChange,
+  handleDrop,
+  handleSave,
+  handleShare,
+  idolId,
+  idolOptions,
   isContinuousShootingEnabled,
-  setBackgroundColor,
-  loadSpine,
-  loadDroppedSpine,
-  toggleAnimation,
-  resetAllAnimation,
-} = useSpineRuntime(
-  computed(() => canvasStageRef.value?.canvasRef ?? null),
-  renderer
-)
-
-const idolList = computed<IdolInfo[]>(() => {
-  if (!idolInfoMap.value) return []
-  return Array.from(idolInfoMap.value.values())
-})
-
-const dressList = computed<DressInfo[]>(() => {
-  const idolName = getIdolName(idolId.value ?? 1)
-  if (!idolName) return []
-  return idolDressMap.value.get(idolName) ?? []
-})
-
-const dressListGroupedByType = computed(() => {
-  const groups: Record<string, (DressInfo & { index: number })[]> = {}
-  dressList.value.forEach((dress, index) => {
-    const dressType = dress.dressType || 'unknown'
-    if (!groups[dressType]) {
-      groups[dressType] = []
-    }
-    groups[dressType].push({ ...dress, index })
-  })
-  return Object.entries(groups).map(([label, items]) => ({ label, items }))
-})
-
-const selectedDressIndex = ref(0)
-const backgroundColor = ref('#000000')
-
-const currentDress = computed<DressInfo | undefined>(() => {
-  return dressList.value[selectedDressIndex.value]
-})
-
-const typeList = computed(() => {
-  if (!currentDress.value) return []
-  const dress = currentDress.value
-  return [
-    {
-      value: 'sml_cloth0' as DressTypeKey,
-      label: DRESS_TYPE_LABELS['sml_cloth0'],
-      available: !!dress.sml_Cloth0,
-    },
-    {
-      value: 'sml_cloth1' as DressTypeKey,
-      label: DRESS_TYPE_LABELS['sml_cloth1'],
-      available: !!dress.sml_Cloth1,
-    },
-    {
-      value: 'big_cloth0' as DressTypeKey,
-      label: DRESS_TYPE_LABELS['big_cloth0'],
-      available: !!dress.big_Cloth0,
-    },
-    {
-      value: 'big_cloth1' as DressTypeKey,
-      label: DRESS_TYPE_LABELS['big_cloth1'],
-      available: !!dress.big_Cloth1,
-    },
-  ]
-})
-
-const { saveImage, copyLinkToClipboard } = useExport(
-  () => app.value,
-  () => container.value,
-  () => idolInfoMap.value?.get(idolId.value ?? 1)?.idolName ?? '',
-  () => {
-    const dress = currentDress.value
-    const type = typeList.value.find((t) => t.value === dressType.value)
-    const dressInfo = dressListGroupedByType.value.find((g) =>
-      g.items.some((i) => i.index === selectedDressIndex.value)
-    )
-    return {
-      category: dressInfo?.label ?? '',
-      name: dress?.dressName ?? '',
-      type: type?.label ?? '',
-    }
-  }
-)
-
-const showCopiedToast = ref(false)
-const showWebGLModal = ref(false)
-const showMobileModal = ref(false)
-const showThanksModal = ref(false)
-
-async function initialize() {
-  const PIXI = window.PIXI
-
-  if (!PIXI.isWebGLSupported() && !PIXI.isWebGPUSupported()) {
-    showWebGLModal.value = true
-    console.log('WebGL/WebGPU is not supported')
-  }
-
-  if (/(Android|iPhone|iPad)/i.test(navigator.userAgent)) {
-    showMobileModal.value = true
-  }
-
-  await fetchIdolList()
-  await loadInitialDress()
-}
-
-async function loadInitialDress() {
-  const idolName = getIdolName(idolId.value ?? 1)
-  if (!idolName) return
-
-  const dresses = await fetchDressList(idolId.value ?? 1, idolName)
-
-  if (!urlFlag.value && enzaId.value) {
-    const idx = dresses.findIndex((d) => d.enzaId === enzaId.value)
-    if (idx >= 0) {
-      selectedDressIndex.value = idx
-    }
-    urlFlag.value = true
-  }
-
-  await loadCurrentSpine()
-}
-
-async function loadCurrentSpine() {
-  const dress = currentDress.value
-  if (!dress) return
-
-  const type = dressType.value ?? getDefaultDressType(dress)
-  dressType.value = type
-
-  if (dress.idolId === 0 && dress.path) {
-    await loadSpine(dress.path, type, true)
-  } else {
-    await loadSpine(dress.enzaId, type)
-  }
-}
-
-function getDefaultDressType(dress: DressInfo): DressTypeKey {
-  if (dress.big_Cloth0) return 'big_cloth0'
-  if (dress.big_Cloth1) return 'big_cloth1'
-  if (dress.sml_Cloth0) return 'sml_cloth0'
-  return 'sml_cloth1'
-}
-
-async function handleIdolChange(newIdolId: number) {
-  idolId.value = newIdolId
-  selectedDressIndex.value = 0
-
-  const idolName = getIdolName(newIdolId)
-  if (idolName) {
-    await fetchDressList(newIdolId, idolName)
-    await nextTick()
-    await loadCurrentSpine()
-  }
-}
-
-async function handleDressChange(newIndex: number) {
-  selectedDressIndex.value = newIndex
-  await loadCurrentSpine()
-}
-
-async function handleTypeChange(newType: DressTypeKey) {
-  dressType.value = newType
-  await loadCurrentSpine()
-}
-
-function handleColorChange(color: string) {
-  backgroundColor.value = color
-  setBackgroundColor(color)
-}
-
-function handleShare() {
-  const link = getShareLink()
-  copyLinkToClipboard(link)
-  showCopiedToast.value = true
-  setTimeout(() => {
-    showCopiedToast.value = false
-  }, 2000)
-}
-
-async function handleSave() {
-  await saveImage()
-}
-
-async function handleDrop(atlas: string, json: string, textures: Map<string, File>) {
-  await loadDroppedSpine(atlas, json, textures)
-}
-
-function handleAnimationToggle(trackIndex: number, checked: boolean) {
-  toggleAnimation(trackIndex, checked)
-}
-
-function handleAnimationReset() {
-  resetAllAnimation()
-}
-
-function handleContinuousShootingChange(enabled: boolean) {
-  isContinuousShootingEnabled.value = enabled
-}
+  loading,
+  openDatabase,
+  selectedDressIndex,
+  showAnimationDrawer,
+  showCopiedToast,
+  showMobilePrompt,
+  showThanksModal,
+  showWebGLModal,
+  typeOptions,
+  updateDress,
+  updateIdol,
+  updateType,
+} = useViewerShared(canvasElementRef, { detectMobilePrompt: true })
 
 function toMobileUI() {
   window.location.href = 'https://mspine.shinycolors.moe'
 }
 
-watch(backgroundColor, (color) => {
-  setBackgroundColor(color)
+function handleResize() {
+  viewportWidth.value = window.innerWidth
+}
+
+watch(isWideLayout, (wide) => {
+  if (wide) {
+    showMenuDrawer.value = false
+  }
 })
 
 onMounted(() => {
-  initialize()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
-  <div class="desktop-viewer">
-    <!-- Modals -->
-    <div v-if="showWebGLModal" class="modal fade show d-block" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Legacy Mode Detected</h5>
-            <button type="button" class="btn-close" @click="showWebGLModal = false" />
-          </div>
-          <div class="modal-body">
-            <div class="text-center">
-              Hardware acceleration is required for PIXI.js to run in WebGL mode.
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" @click="showWebGLModal = false">
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <n-layout has-sider style="height: 100vh">
+    <n-layout-sider
+      v-if="isWideLayout"
+      bordered
+      :width="320"
+      :collapsed-width="0"
+      content-style="padding: 16px; overflow-y: auto"
+    >
+      <ViewerControls
+        :idol-id="idolId ?? null"
+        :selected-dress-index="selectedDressIndex"
+        :dress-type="dressType ?? null"
+        :background-color="backgroundColor"
+        :idol-options="idolOptions"
+        :dress-options="dressOptions"
+        :type-options="typeOptions"
+        :continuous-shooting-enabled="isContinuousShootingEnabled"
+        @update:idol="updateIdol"
+        @update:dress="updateDress"
+        @update:type="updateType"
+        @update:background-color="handleColorChange"
+        @update:continuous-shooting-enabled="handleContinuousShootingChange"
+        @open-animation="showAnimationDrawer = true"
+        @open-database="openDatabase"
+        @open-thanks="showThanksModal = true"
+        @share="handleShare"
+        @save="handleSave"
+      />
+    </n-layout-sider>
 
-    <div v-if="showMobileModal" class="modal fade show d-block" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Mobile Device Detected</h5>
-            <button type="button" class="btn-close" @click="showMobileModal = false" />
-          </div>
-          <div class="modal-body">
-            <div class="text-center">Mobile Device Detected, redirect to mobile UI?</div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" @click="toMobileUI">Yes</button>
-            <button type="button" class="btn btn-danger" @click="showMobileModal = false">
-              No
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <n-layout-content>
+      <n-button
+        v-if="!isWideLayout"
+        style="position: absolute; top: 16px; left: 16px; z-index: 20"
+        @click="showMenuDrawer = true"
+      >
+        Controls
+      </n-button>
+      <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
+      <n-spin
+        v-if="loading"
+        style="
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
+      />
+      <n-alert
+        v-if="error"
+        type="error"
+        title="Load Failed"
+        style="position: absolute; left: 16px; right: 16px; bottom: 16px"
+      >
+        {{ error.message }}
+      </n-alert>
+    </n-layout-content>
+  </n-layout>
 
-    <div v-if="showThanksModal" class="modal fade show d-block" id="thanksModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">特別感謝</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              @click="showThanksModal = false"
-            />
-          </div>
-          <div class="modal-body">
-            <span class="text-primary">技術諮詢</span>
-            <div class="ms-2">TWY</div>
-            <span class="text-primary">爆肝小夥伴</span>
-            <div class="ms-2">木下梨花 KaiOuO Lycoris 剎那 十秒十六胎 匿名小夥伴一號</div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showThanksModal = false">
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <n-modal v-model:show="showWebGLModal" :mask-closable="false">
+    <n-card title="Legacy Mode Detected" style="width: min(560px, calc(100vw - 2rem))">
+      <n-text>Hardware acceleration is required for PIXI.js to run in WebGL mode.</n-text>
+      <template #action>
+        <n-space justify="end">
+          <n-button type="primary" @click="showWebGLModal = false">閉じる</n-button>
+        </n-space>
+      </template>
+    </n-card>
+  </n-modal>
 
-    <!-- Toast -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-      <div v-if="showCopiedToast" class="toast show" role="alert">
-        <div class="toast-header">
-          <strong class="me-auto">Copied!</strong>
-          <button type="button" class="btn-close" @click="showCopiedToast = false" />
-        </div>
-        <div class="toast-body">
-          <div class="text-center">Link is copied!</div>
-        </div>
-      </div>
-    </div>
+  <n-modal v-model:show="showMobilePrompt" :mask-closable="false">
+    <n-card title="Mobile Device Detected" style="width: min(560px, calc(100vw - 2rem))">
+      <n-text>Mobile Device Detected, redirect to mobile UI?</n-text>
+      <template #action>
+        <n-space justify="end">
+          <n-button @click="showMobilePrompt = false">No</n-button>
+          <n-button type="primary" @click="toMobileUI">Yes</n-button>
+        </n-space>
+      </template>
+    </n-card>
+  </n-modal>
 
-    <!-- Animation Offcanvas -->
-    <div class="offcanvas offcanvas-start bg-secondary" id="animationPanel" tabindex="-1">
+  <n-modal v-model:show="showThanksModal">
+    <n-card title="特別感謝" style="width: min(560px, calc(100vw - 2rem))">
+      <n-space vertical :size="8">
+        <n-text strong>技術諮詢</n-text>
+        <n-text>TWY</n-text>
+        <n-text strong>爆肝小夥伴</n-text>
+        <n-text>木下梨花 KaiOuO Lycoris 剎那 十秒十六胎 匿名小夥伴一號</n-text>
+      </n-space>
+      <template #action>
+        <n-space justify="end">
+          <n-button @click="showThanksModal = false">閉じる</n-button>
+        </n-space>
+      </template>
+    </n-card>
+  </n-modal>
+
+  <n-drawer v-model:show="showAnimationDrawer" placement="right" :width="360">
+    <n-drawer-content title="Animation" closable>
       <AnimationPanel
         :animations="animations"
         @toggle="handleAnimationToggle"
         @reset="handleAnimationReset"
+        @close="showAnimationDrawer = false"
       />
-    </div>
+    </n-drawer-content>
+  </n-drawer>
 
-    <!-- Main Layout -->
-    <div class="main-container">
-      <div class="sidebar bg-dark">
-        <div class="sidebar-content">
-          <label>Idol:</label>
-          <select
-            class="form-select"
-            :value="idolId"
-            @change="(e) => handleIdolChange(Number((e.target as HTMLSelectElement).value))"
-          >
-            <option v-for="idol in idolList" :key="idol.idolId" :value="idol.idolId">
-              {{ idol.idolName }}
-            </option>
-          </select>
+  <n-drawer v-model:show="showMenuDrawer" placement="left" width="min(360px, 88vw)">
+    <n-drawer-content title="Controls" :closable="!isWideLayout">
+      <ViewerControls
+        :idol-id="idolId ?? null"
+        :selected-dress-index="selectedDressIndex"
+        :dress-type="dressType ?? null"
+        :background-color="backgroundColor"
+        :idol-options="idolOptions"
+        :dress-options="dressOptions"
+        :type-options="typeOptions"
+        :continuous-shooting-enabled="isContinuousShootingEnabled"
+        @update:idol="updateIdol"
+        @update:dress="updateDress"
+        @update:type="updateType"
+        @update:background-color="handleColorChange"
+        @update:continuous-shooting-enabled="handleContinuousShootingChange"
+        @open-animation="showAnimationDrawer = true"
+        @open-database="openDatabase"
+        @open-thanks="showThanksModal = true"
+        @share="handleShare"
+        @save="handleSave"
+      />
+    </n-drawer-content>
+  </n-drawer>
 
-          <label>Dress:</label>
-          <select
-            class="form-select"
-            :value="selectedDressIndex"
-            @change="(e) => handleDressChange(Number((e.target as HTMLSelectElement).value))"
-          >
-            <optgroup
-              v-for="group in dressListGroupedByType"
-              :key="group.label"
-              :label="group.label"
-            >
-              <option
-                v-for="item in group.items"
-                :key="item.index"
-                :value="item.index"
-                :disabled="!item.exist"
-              >
-                {{ item.dressName }}
-              </option>
-            </optgroup>
-          </select>
-
-          <label>Type:</label>
-          <select
-            class="form-select"
-            :value="dressType"
-            @change="(e) => handleTypeChange((e.target as HTMLSelectElement).value as DressTypeKey)"
-          >
-            <option
-              v-for="t in typeList.filter((t) => t.available)"
-              :key="t.value"
-              :value="t.value"
-            >
-              {{ t.label }}
-            </option>
-          </select>
-
-          <label>Animation:</label>
-          <button
-            type="button"
-            class="btn btn-primary"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#animationPanel"
-          >
-            AnimationList
-          </button>
-
-          <label>Background Color:</label>
-          <input
-            type="color"
-            class="form-control mb-3"
-            :value="backgroundColor"
-            @input="(e) => handleColorChange((e.target as HTMLInputElement).value)"
-          />
-
-          <a href="https://shinycolors.moe" class="btn btn-info mb-3" target="_blank">
-            ShinyColors Database
-          </a>
-          <button type="button" class="btn btn-info mb-3" @click="showThanksModal = true">
-            Special Thanks
-          </button>
-
-          <button class="btn btn-secondary mb-3" type="button" @click="handleShare">
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M9 13.5L15 16.5M15 7.5L9 10.5M18 21C16.3431 21 15 19.6569 15 18C15 16.3431 16.3431 15 18 15C19.6569 15 21 16.3431 21 18C21 19.6569 19.6569 21 18 21ZM6 15C4.34315 15 3 13.6569 3 12C3 10.3431 4.34315 9 6 9C7.65685 9 9 10.3431 9 12C9 13.6569 7.65685 15 6 15ZM18 9C16.3431 9 15 7.65685 15 6C15 4.34315 16.3431 3 18 3C19.6569 3 21 4.34315 21 6C21 7.65685 19.6569 9 18 9Z"
-                stroke="#000"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            share
-          </button>
-          <button class="btn btn-secondary mb-3" type="button" @click="handleSave">
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="#000"
-            >
-              <path
-                d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7"
-                fill="none"
-                stroke="#000"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-              <polyline
-                points="7.9 12.3 12 16.3 16.1 12.3"
-                fill="none"
-                stroke="#000"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-              <line
-                x1="12"
-                y1="2.7"
-                x2="12"
-                y2="14.2"
-                fill="none"
-                stroke="#000"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-            save
-          </button>
-
-          <div class="form-check form-switch">
-            <input
-              id="continuousShootingSwitch"
-              class="form-check-input"
-              type="checkbox"
-              role="switch"
-              :checked="isContinuousShootingEnabled"
-              @change="
-                (e) => handleContinuousShootingChange((e.target as HTMLInputElement).checked)
-              "
-            />
-            <label class="form-check-label" for="continuousShootingSwitch">
-              <span>Enable continuous shooting</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="canvas-container">
-        <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
-      </div>
-    </div>
-  </div>
+  <n-alert
+    v-if="showCopiedToast"
+    type="success"
+    title="Copied"
+    style="position: fixed; right: 16px; bottom: 16px; z-index: 50; width: 240px"
+  >
+    Link is copied!
+  </n-alert>
 </template>
-
-<style scoped>
-.desktop-viewer {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-}
-
-.main-container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
-.sidebar {
-  width: 25%;
-  min-width: 250px;
-  max-width: 350px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.sidebar-content {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sidebar-content label {
-  color: #fff;
-  padding: 4px;
-  margin-top: 0.5rem;
-}
-
-.canvas-container {
-  flex: 1;
-  display: flex;
-  padding: 0;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
-}
-</style>

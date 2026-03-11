@@ -34,6 +34,8 @@ export interface UrlParams {
   enzaId?: string
   dressType?: DressTypeKey
   renderer?: 'webgl' | 'webgpu'
+  backgroundColor?: string
+  continuousShootingEnabled?: boolean
 }
 
 export const DRESS_TYPE_LABELS: Record<DressTypeKey, string> = {

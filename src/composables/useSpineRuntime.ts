@@ -1,6 +1,7 @@
 import { ref, shallowRef, type Ref } from 'vue'
 import type { DressTypeKey, AnimationItem } from '../types'
 import { DRESS_TYPE_MIGRATE } from '../types'
+import { getSpineUrl } from '../config'
 
 declare global {
   interface Window {
@@ -87,19 +88,19 @@ export function useSpineRuntime(
       if (isSubCharacter) {
         label = enzaId.replace('.json', '')
         const baseType = DRESS_TYPE_MIGRATE[type]
-        skelUrl = `https://cf-static.shinycolors.moe/spine/sub_characters/${baseType}/${enzaId}`
+        skelUrl = getSpineUrl(`/sub_characters/${baseType}/${enzaId}`)
         atlasUrl = skelUrl.replace('.json', '.atlas')
         spineCache.set(`${enzaId}/picture_motion`, label)
       } else if (enzaId[0] === '2') {
         label = `${enzaId}_picture_motion`
-        skelUrl = `https://cf-static.shinycolors.moe/spine/support_idols/picture_motion/${enzaId}/data.json`
-        atlasUrl = `https://cf-static.shinycolors.moe/spine/support_idols/picture_motion/${enzaId}/data.atlas`
+        skelUrl = getSpineUrl(`/support_idols/picture_motion/${enzaId}/data.json`)
+        atlasUrl = getSpineUrl(`/support_idols/picture_motion/${enzaId}/data.atlas`)
         spineCache.set(`${enzaId}/picture_motion`, label)
       } else {
         label = `${enzaId}_${type}`
         const baseType = DRESS_TYPE_MIGRATE[type]
-        skelUrl = `https://cf-static.shinycolors.moe/spine/idols/${baseType}/${enzaId}/data.json`
-        atlasUrl = `https://cf-static.shinycolors.moe/spine/idols/${baseType}/${enzaId}/data.atlas`
+        skelUrl = getSpineUrl(`/idols/${baseType}/${enzaId}/data.json`)
+        atlasUrl = getSpineUrl(`/idols/${baseType}/${enzaId}/data.atlas`)
         spineCache.set(cacheKey, label)
       }
 

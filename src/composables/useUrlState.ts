@@ -1,62 +1,118 @@
 import { ref, watch } from 'vue'
 import type { DressTypeKey, UrlParams } from '../types'
 
-const urlParams = new URLSearchParams(window.location.search)
+const STATE_STORAGE_KEY = 'shinycolors-spine-viewer-state'
+const DRESS_TYPES: DressTypeKey[] = ['sml_cloth0', 'sml_cloth1', 'big_cloth0', 'big_cloth1']
 
-function getInitialParams(): UrlParams {
+function isDressTypeKey(value: unknown): value is DressTypeKey {
+  return typeof value === 'string' && DRESS_TYPES.includes(value as DressTypeKey)
+}
+
+function isRenderer(value: unknown): value is 'webgl' | 'webgpu' {
+  return value === 'webgl' || value === 'webgpu'
+}
+
+function isHexColor(value: unknown): value is string {
+  return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)
+}
+
+function readUrlParams(): UrlParams {
+  const urlParams = new URLSearchParams(window.location.search)
   const params: UrlParams = {}
 
   if (urlParams.has('idolId')) {
     const idolId = Number(urlParams.get('idolId'))
-    if (!isNaN(idolId)) {
+    if (!Number.isNaN(idolId)) {
       params.idolId = idolId
     }
   }
 
-  if (urlParams.has('enzaId')) {
-    params.enzaId = urlParams.get('enzaId')!
+  const enzaId = urlParams.get('enzaId')
+  if (enzaId) {
+    params.enzaId = enzaId
   }
 
-  if (urlParams.has('dressType')) {
-    const dt = urlParams.get('dressType') as DressTypeKey
-    if (['sml_cloth0', 'sml_cloth1', 'big_cloth0', 'big_cloth1'].includes(dt)) {
-      params.dressType = dt
-    }
+  const dressType = urlParams.get('dressType')
+  if (isDressTypeKey(dressType)) {
+    params.dressType = dressType
   }
 
-  if (urlParams.has('renderer')) {
-    const r = urlParams.get('renderer') as 'webgl' | 'webgpu'
-    if (['webgl', 'webgpu'].includes(r)) {
-      params.renderer = r
-    }
+  const renderer = urlParams.get('renderer')
+  if (isRenderer(renderer)) {
+    params.renderer = renderer
+  }
+
+  const backgroundColor = urlParams.get('bgColor')
+  if (isHexColor(backgroundColor)) {
+    params.backgroundColor = backgroundColor
+  }
+
+  if (urlParams.has('continuousShootingEnabled')) {
+    params.continuousShootingEnabled = urlParams.get('continuousShootingEnabled') === 'true'
   }
 
   return params
 }
 
+function readStoredParams(): UrlParams {
+  try {
+    const raw = localStorage.getItem(STATE_STORAGE_KEY)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw) as Partial<UrlParams>
+    const params: UrlParams = {}
+
+    if (typeof parsed.idolId === 'number' && !Number.isNaN(parsed.idolId)) {
+      params.idolId = parsed.idolId
+    }
+    if (typeof parsed.enzaId === 'string' && parsed.enzaId) {
+      params.enzaId = parsed.enzaId
+    }
+    if (isDressTypeKey(parsed.dressType)) {
+      params.dressType = parsed.dressType
+    }
+    if (isRenderer(parsed.renderer)) {
+      params.renderer = parsed.renderer
+    }
+    if (isHexColor(parsed.backgroundColor)) {
+      params.backgroundColor = parsed.backgroundColor
+    }
+    if (typeof parsed.continuousShootingEnabled === 'boolean') {
+      params.continuousShootingEnabled = parsed.continuousShootingEnabled
+    }
+
+    return params
+  } catch {
+    return {}
+  }
+}
+
+function getInitialParams(): UrlParams {
+  const url = readUrlParams()
+  const storage = readStoredParams()
+  return { ...url, ...storage }
+}
+
 export function useUrlState() {
-  const idolId = ref<number | undefined>(getInitialParams().idolId ?? 1)
-  const enzaId = ref<string | undefined>(getInitialParams().enzaId)
-  const dressType = ref<DressTypeKey | undefined>(getInitialParams().dressType)
-  const renderer = ref<'webgl' | 'webgpu'>(getInitialParams().renderer ?? 'webgpu')
+  const initial = getInitialParams()
+  const idolId = ref<number | undefined>(initial.idolId ?? 1)
+  const enzaId = ref<string | undefined>(initial.enzaId)
+  const dressType = ref<DressTypeKey | undefined>(initial.dressType)
+  const renderer = ref<'webgl' | 'webgpu'>(initial.renderer ?? 'webgpu')
+  const backgroundColor = ref<string>(initial.backgroundColor ?? '#000000')
+  const continuousShootingEnabled = ref<boolean>(initial.continuousShootingEnabled ?? false)
   const urlFlag = ref(false)
 
-  function updateUrl() {
-    const params = new URLSearchParams()
-
-    if (idolId.value !== undefined) {
-      params.set('idolId', String(idolId.value))
+  function persistState() {
+    const state: UrlParams = {
+      idolId: idolId.value,
+      enzaId: enzaId.value,
+      dressType: dressType.value,
+      renderer: renderer.value,
+      backgroundColor: backgroundColor.value,
+      continuousShootingEnabled: continuousShootingEnabled.value,
     }
-    if (enzaId.value) {
-      params.set('enzaId', enzaId.value)
-    }
-    if (dressType.value) {
-      params.set('dressType', dressType.value)
-    }
-    params.set('renderer', renderer.value)
-
-    const newUrl = `${window.location.pathname}?${params.toString()}`
-    window.history.replaceState({}, '', newUrl)
+    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state))
   }
 
   function getShareLink(): string {
@@ -68,20 +124,29 @@ export function useUrlState() {
     if (dressType.value) {
       params.set('dressType', dressType.value)
     }
+    params.set('bgColor', backgroundColor.value)
+    params.set('continuousShootingEnabled', String(continuousShootingEnabled.value))
     return `https://spine.shinycolors.moe/?${params.toString()}`
   }
 
-  watch([idolId, enzaId, dressType, renderer], () => {
-    updateUrl()
-  })
+  watch(
+    [idolId, enzaId, dressType, renderer, backgroundColor, continuousShootingEnabled],
+    () => {
+      persistState()
+    },
+    {
+      immediate: true,
+    }
+  )
 
   return {
     idolId,
     enzaId,
     dressType,
     renderer,
+    backgroundColor,
+    continuousShootingEnabled,
     urlFlag,
     getShareLink,
-    updateUrl,
   }
 }
