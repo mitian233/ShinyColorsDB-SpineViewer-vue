@@ -18,7 +18,6 @@ import AnimationPanel from '../components/AnimationPanel.vue'
 import CanvasStage from '../components/CanvasStage.vue'
 import ViewerControls from '../components/ViewerControls.vue'
 import { useViewerShared } from '../composables/useViewerShared'
-import { naiveThemeOverrides } from '../theme/naiveTheme'
 
 const canvasStageRef = ref<InstanceType<typeof CanvasStage> | null>(null)
 const canvasElementRef = computed(() => canvasStageRef.value?.canvasRef ?? null)
