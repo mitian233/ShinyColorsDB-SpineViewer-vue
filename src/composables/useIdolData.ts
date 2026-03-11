@@ -1,11 +1,9 @@
 import { ref } from 'vue'
 import type { IdolInfo, DressInfo } from '../types'
+import { API_BASE_URL, CF_BASE_URL } from '../config'
 
 const idolInfoMap = ref<Map<number, IdolInfo> | null>(null)
 const idolDressMap = ref<Map<string, DressInfo[]>>(new Map())
-
-const API_BASE = 'https://api.shinycolors.moe/spine'
-const CF_BASE = 'https://cf-static.shinycolors.moe'
 
 export function useIdolData() {
   const loading = ref(false)
@@ -20,7 +18,7 @@ export function useIdolData() {
     error.value = null
 
     try {
-      const response = await fetch(`${API_BASE}/idollist`)
+      const response = await fetch(`${API_BASE_URL}/idollist`)
       const data: IdolInfo[] = await response.json()
       const map = new Map<number, IdolInfo>()
       data.forEach((item) => {
@@ -47,10 +45,10 @@ export function useIdolData() {
     try {
       let data: DressInfo[]
       if (idolId === 91) {
-        const response = await fetch(`${CF_BASE}/others/hazuki.json`)
+        const response = await fetch(`${CF_BASE_URL}/others/hazuki.json`)
         data = await response.json()
       } else {
-        const response = await fetch(`${API_BASE}/dressList?idolId=${idolId}`)
+        const response = await fetch(`${API_BASE_URL}/dressList?idolId=${idolId}`)
         data = await response.json()
       }
       idolDressMap.value.set(idolName, data)

@@ -13,4 +13,23 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api.shinycolors.moe',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/spine'),
+      },
+      '/cf': {
+        target: 'https://cf-static.shinycolors.moe',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cf/, ''),
+      },
+      '/spine': {
+        target: 'https://cf-static.shinycolors.moe',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/spine/, '/spine'),
+      },
+    },
+  },
 })
