@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { NButton, NColorPicker, NDivider, NSpace, NSelect, NSwitch, NText } from 'naive-ui'
 import type { ViewerSelectGroupOption, ViewerSelectOption } from '../composables/useViewerShared'
 
 const props = withDefaults(
@@ -49,7 +48,7 @@ const emit = defineEmits<{
     <n-select
       :value="props.idolId"
       :options="props.idolOptions"
-      @update:value="(value) => emit('update:idol', value)"
+      @update:value="(value: any) => emit('update:idol', value)"
     />
 
     <n-text
@@ -66,7 +65,7 @@ const emit = defineEmits<{
     <n-select
       :value="props.selectedDressIndex"
       :options="props.dressOptions"
-      @update:value="(value) => emit('update:dress', value)"
+      @update:value="(value: any) => emit('update:dress', value)"
     />
 
     <n-text
@@ -83,7 +82,7 @@ const emit = defineEmits<{
     <n-select
       :value="props.dressType"
       :options="props.typeOptions"
-      @update:value="(value) => emit('update:type', value)"
+      @update:value="(value: any) => emit('update:type', value)"
     />
 
     <n-text
@@ -113,12 +112,12 @@ const emit = defineEmits<{
     <n-color-picker
       :value="props.backgroundColor"
       :show-alpha="false"
-      @update:value="(value) => emit('update:backgroundColor', value)"
+      @update:value="(value: any) => emit('update:backgroundColor', value)"
     />
 
     <n-switch
       :value="props.continuousShootingEnabled"
-      @update:value="(value) => emit('update:continuousShootingEnabled', value)"
+      @update:value="(value: any) => emit('update:continuousShootingEnabled', value)"
     >
       <template #checked>Continuous shooting</template>
       <template #unchecked>Continuous shooting</template>

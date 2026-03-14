@@ -1,19 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import {
-  NAlert,
-  NButton,
-  NCard,
-  NDrawer,
-  NDrawerContent,
-  NLayout,
-  NLayoutSider,
-  NLayoutContent,
-  NModal,
-  NSpace,
-  NSpin,
-  NText,
-} from 'naive-ui'
 import AnimationPanel from '../components/AnimationPanel.vue'
 import CanvasStage from '../components/CanvasStage.vue'
 import ViewerControls from '../components/ViewerControls.vue'
