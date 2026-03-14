@@ -195,7 +195,9 @@ export function useViewerShared(
   }
 
   function getDefaultDressType(dress: DressInfo): DressTypeKey {
-    return resolveAvailableDressTypes(dress)[0] ?? 'big_cloth0'
+    const availableTypes = resolveAvailableDressTypes(dress)
+    const preferredType = DRESS_TYPE_FALLBACK_ORDER.find((type) => availableTypes.includes(type))
+    return preferredType ?? 'big_cloth0'
   }
 
   async function loadCurrentSpine() {
@@ -224,6 +226,7 @@ export function useViewerShared(
   async function handleIdolChange(newIdolId: number) {
     idolId.value = newIdolId
     selectedDressIndex.value = 0
+    dressType.value = undefined
 
     const idolName = getIdolName(newIdolId)
     if (!idolName) return
