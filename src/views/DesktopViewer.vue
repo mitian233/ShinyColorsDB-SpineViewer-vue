@@ -47,18 +47,13 @@ const {
   selectedDressIndex,
   showAnimationDrawer,
   showCopiedToast,
-  showMobilePrompt,
   showThanksModal,
   showWebGLModal,
   typeOptions,
   updateDress,
   updateIdol,
   updateType,
-} = useViewerShared(canvasElementRef, { detectMobilePrompt: true })
-
-function toMobileUI() {
-  window.location.href = 'https://mspine.shinycolors.moe'
-}
+} = useViewerShared(canvasElementRef)
 
 function handleResize() {
   viewportWidth.value = window.innerWidth
@@ -146,18 +141,6 @@ onUnmounted(() => {
       <template #action>
         <n-space justify="end">
           <n-button type="primary" @click="showWebGLModal = false">閉じる</n-button>
-        </n-space>
-      </template>
-    </n-card>
-  </n-modal>
-
-  <n-modal v-model:show="showMobilePrompt" :mask-closable="false">
-    <n-card title="Mobile Device Detected" style="width: min(560px, calc(100vw - 2rem))">
-      <n-text>Mobile Device Detected, redirect to mobile UI?</n-text>
-      <template #action>
-        <n-space justify="end">
-          <n-button @click="showMobilePrompt = false">No</n-button>
-          <n-button type="primary" @click="toMobileUI">Yes</n-button>
         </n-space>
       </template>
     </n-card>

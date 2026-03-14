@@ -25,10 +25,6 @@ export type ViewerSelectGroupOption = {
   children: ViewerSelectOption[]
 }
 
-type UseViewerSharedOptions = {
-  detectMobilePrompt?: boolean
-}
-
 const DRESS_TYPE_FIELDS: Array<{ value: DressTypeKey; field: keyof DressInfo }> = [
   { value: 'sml_cloth0', field: 'sml_Cloth0' },
   { value: 'sml_cloth1', field: 'sml_Cloth1' },
@@ -43,10 +39,7 @@ const DRESS_TYPE_FALLBACK_ORDER: DressTypeKey[] = [
   'sml_cloth1',
 ]
 
-export function useViewerShared(
-  canvasElementRef: Ref<HTMLCanvasElement | null>,
-  options: UseViewerSharedOptions = {}
-) {
+export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>) {
   const {
     idolId,
     enzaId,
@@ -159,7 +152,6 @@ export function useViewerShared(
 
   const showAnimationDrawer = ref(false)
   const showCopiedToast = ref(false)
-  const showMobilePrompt = ref(false)
   const showThanksModal = ref(false)
   const showWebGLModal = ref(false)
 
@@ -167,10 +159,6 @@ export function useViewerShared(
     const PIXI = window.PIXI
     if (!PIXI.isWebGLSupported() && !PIXI.isWebGPUSupported()) {
       showWebGLModal.value = true
-    }
-
-    if (options.detectMobilePrompt && /(Android|iPhone|iPad)/i.test(navigator.userAgent)) {
-      showMobilePrompt.value = true
     }
 
     await fetchIdolList()
@@ -336,7 +324,6 @@ export function useViewerShared(
     selectedDressIndex,
     showAnimationDrawer,
     showCopiedToast,
-    showMobilePrompt,
     showThanksModal,
     showWebGLModal,
     typeOptions,
