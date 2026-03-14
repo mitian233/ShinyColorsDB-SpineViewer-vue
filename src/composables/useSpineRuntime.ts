@@ -72,7 +72,7 @@ export function useSpineRuntime(
     const cacheKey = `${enzaId}/${type}`
 
     if (spineCache.has(cacheKey)) {
-      await setupAnimationList(spineCache.get(cacheKey)!)
+      await setupAnimationList(spineCache.get(cacheKey)!, type)
       return
     }
 
@@ -109,7 +109,7 @@ export function useSpineRuntime(
         { alias: `atlas_${label}`, src: atlasUrl },
       ])
 
-      await setupAnimationList(label)
+      await setupAnimationList(label, type)
     } catch (e) {
       error.value = e as Error
       console.error('Failed to load spine:', e)
@@ -118,7 +118,7 @@ export function useSpineRuntime(
     }
   }
 
-  async function setupAnimationList(spineLabel: string) {
+  async function setupAnimationList(spineLabel: string, dressType?: DressTypeKey) {
     const PIXI = window.PIXI
 
     const spine = PIXI.Spine37.Spine.from({
@@ -162,7 +162,7 @@ export function useSpineRuntime(
     }
 
     animations.value = anims
-    await renderToStage(spine)
+    await renderToStage(spine, dressType)
   }
 
   function toggleAnimation(trackIndex: number, checked: boolean) {
@@ -278,7 +278,7 @@ export function useSpineRuntime(
     return graphics
   }
 
-  async function renderToStage(spine: any, dressType?: DressTypeKey) {
+  async function renderToStage(spine: any, _dressType?: DressTypeKey) {
     if (!app.value || !container.value) return
 
     if (isContinuousShootingEnabled.value) {
@@ -290,39 +290,46 @@ export function useSpineRuntime(
     container.value.removeChildren()
     container.value.addChild(spine)
 
-    const currentDressType = dressType || 'big_cloth0'
-    let scale = 0.9
-
-    switch (currentDressType) {
-      case 'sml_cloth0':
-        break
-      case 'sml_cloth1':
-        scale = 2.5
-        break
-      case 'big_cloth0':
-      case 'big_cloth1':
-        scale = (app.value.view.height / spine.skeleton.data.height) * 0.9
-        break
-    }
+    container.value.scale.set(1)
+    container.value.pivot.set(0, 0)
+    container.value.position.set(0, 0)
+    spine.position.set(0, 0)
 
     spine.update(0)
 
-    const gp = createGraphics(spine)
-    const gpBound = gp.getLocalBounds()
-    spine.position.set(-gpBound.x, -gpBound.y)
+    const meshBound = createGraphics(spine).getLocalBounds()
+    const spineBound = spine.getLocalBounds()
+    const chosenBound =
+      meshBound.width * meshBound.height >= spineBound.width * spineBound.height
+        ? meshBound
+        : spineBound
 
-    const PIXI = window.PIXI
-    const emptySprite = PIXI.Sprite.from(PIXI.Texture.EMPTY)
-    emptySprite.alpha = 0
-    emptySprite.width = Math.max(spine.skeleton.data.width, gpBound.width) + 50
-    emptySprite.height = Math.max(spine.skeleton.data.height, gpBound.height) + 20
-    emptySprite.position.set(-25, -10)
-    container.value.addChild(emptySprite)
+    const fallbackWidth = Math.max(spine.skeleton?.data?.width ?? 1, 1)
+    const fallbackHeight = Math.max(spine.skeleton?.data?.height ?? 1, 1)
+
+    const boundWidth = chosenBound.width > 0 ? chosenBound.width : fallbackWidth
+    const boundHeight = chosenBound.height > 0 ? chosenBound.height : fallbackHeight
+    const boundX = Number.isFinite(chosenBound.x) ? chosenBound.x : 0
+    const boundY = Number.isFinite(chosenBound.y) ? chosenBound.y : 0
+
+    spine.position.set(-boundX, -boundY)
+
+    const canvasWidth = app.value.renderer.width
+    const canvasHeight = app.value.renderer.height
+    const margin = 0.9
+    const scaleX = canvasWidth / boundWidth
+    const scaleY = canvasHeight / boundHeight
+
+    let scale = Math.min(scaleX, scaleY) * margin
+    if (!Number.isFinite(scale) || scale <= 0) {
+      scale = 1
+    }
 
     container.value.scale.set(scale)
-    const contLocalBound = container.value.getLocalBounds()
-    container.value.pivot.set(contLocalBound.width / 2, contLocalBound.height / 2)
-    container.value.position.set(app.value.view.width / 2, app.value.view.height / 2)
+    container.value.position.set(
+      (canvasWidth - boundWidth * scale) / 2,
+      (canvasHeight - boundHeight * scale) / 2
+    )
   }
 
   async function loadDroppedSpine(atlas: string, json: string, textures: Map<string, File>) {
