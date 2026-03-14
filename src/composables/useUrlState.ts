@@ -90,7 +90,7 @@ function readStoredParams(): UrlParams {
 function getInitialParams(): UrlParams {
   const url = readUrlParams()
   const storage = readStoredParams()
-  return { ...url, ...storage }
+  return { ...storage, ...url }
 }
 
 export function useUrlState() {
