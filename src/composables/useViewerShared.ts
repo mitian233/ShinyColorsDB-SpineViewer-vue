@@ -64,6 +64,7 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
     resetAllAnimation,
     setBackgroundColor,
     toggleAnimation,
+    destroy,
   } = useSpineRuntime(canvasElementRef, renderer)
 
   isContinuousShootingEnabled.value = continuousShootingEnabled.value
@@ -330,6 +331,7 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
     updateDress,
     updateIdol,
     updateType,
+    destroy,
   }
 }
 function resolveAvailableDressTypes(dress: DressInfo | undefined): DressTypeKey[] {

@@ -134,9 +134,11 @@ describe('useSpineRuntime', () => {
     await runtime.loadSpine('123', 'sml_cloth0') // Loads 'wait' by default
 
     runtime.toggleAnimation(1, true) // Toggle 'talk'
-    expect(runtime.animations.value![1].checked).toBe(true)
+    const talkAnimation = runtime.animations.value?.[1]
+    expect(talkAnimation).toBeDefined()
+    expect(talkAnimation!.checked).toBe(true)
 
     runtime.toggleAnimation(1, false) // Untoggle 'talk'
-    expect(runtime.animations.value![1].checked).toBe(false)
+    expect(talkAnimation!.checked).toBe(false)
   })
 })

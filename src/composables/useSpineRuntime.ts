@@ -60,16 +60,18 @@ export function useSpineRuntime(
 
   function setBackgroundColor(color: string) {
     if (app.value) {
-      app.value.renderer.background.color = color.replace(/#/, '0X')
+      const colorNumber = parseInt(color.replace('#', ''), 16)
+      app.value.renderer.background.color = isNaN(colorNumber) ? 0x000000 : colorNumber
     }
   }
 
   async function loadSpine(enzaId: string, type: DressTypeKey, isSubCharacter = false) {
-    if (!initialized.value) {
-      await initApp()
-    }
+    if (!initialized.value) await initApp()
 
-    const cacheKey = `${enzaId}/${type}`
+    let cacheKey: string
+    if (isSubCharacter) cacheKey = `${enzaId}/sub_character`
+    else if (enzaId[0] === '2') cacheKey = `${enzaId}/support_idol`
+    else cacheKey = `${enzaId}/${type}`
 
     if (spineCache.has(cacheKey)) {
       await setupAnimationList(spineCache.get(cacheKey)!, type)
@@ -90,12 +92,12 @@ export function useSpineRuntime(
         const baseType = DRESS_TYPE_MIGRATE[type]
         skelUrl = getSpineUrl(`/sub_characters/${baseType}/${enzaId}`)
         atlasUrl = skelUrl.replace('.json', '.atlas')
-        spineCache.set(`${enzaId}/picture_motion`, label)
+        spineCache.set(cacheKey, label)
       } else if (enzaId[0] === '2') {
         label = `${enzaId}_picture_motion`
         skelUrl = getSpineUrl(`/support_idols/picture_motion/${enzaId}/data.json`)
         atlasUrl = getSpineUrl(`/support_idols/picture_motion/${enzaId}/data.atlas`)
-        spineCache.set(`${enzaId}/picture_motion`, label)
+        spineCache.set(cacheKey, label)
       } else {
         label = `${enzaId}_${type}`
         const baseType = DRESS_TYPE_MIGRATE[type]
@@ -148,9 +150,7 @@ export function useSpineRuntime(
         checked: isWait,
       })
 
-      if (isWait) {
-        spine.state.setAnimation(index, name, true)
-      }
+      if (isWait) spine.state.setAnimation(index, name, true)
     }
 
     if (!hasWait && anims.length > 0) {
@@ -171,13 +171,13 @@ export function useSpineRuntime(
     const anim = animations.value.find((a) => a.trackIndex === trackIndex)
     if (anim) {
       anim.checked = checked
+    } else {
+      console.warn(`Animation with trackIndex ${trackIndex} not found`)
+      return
     }
 
-    if (checked) {
-      currentSpine.value.state.setAnimation(trackIndex, anim!.name, true)
-    } else {
-      currentSpine.value.state.clearTrack(trackIndex)
-    }
+    if (checked) currentSpine.value.state.setAnimation(trackIndex, anim.name, true)
+    else currentSpine.value.state.clearTrack(trackIndex)
 
     if (!currentSpine.value.autoUpdate) {
       currentSpine.value.skeleton.setToSetupPose()
@@ -204,9 +204,7 @@ export function useSpineRuntime(
 
       if (hasWait) {
         const waitAnim = animations.value.find((a) => a.name === 'wait')
-        if (waitAnim) {
-          currentSpine.value.state.setAnimation(waitAnim.trackIndex, 'wait', true)
-        }
+        if (waitAnim) currentSpine.value.state.setAnimation(waitAnim.trackIndex, 'wait', true)
       } else if (animations.value.length > 0) {
         const firstAnim = animations.value[0]
         if (firstAnim) {
@@ -321,9 +319,7 @@ export function useSpineRuntime(
     const scaleY = canvasHeight / boundHeight
 
     let scale = Math.min(scaleX, scaleY) * margin
-    if (!Number.isFinite(scale) || scale <= 0) {
-      scale = 1
-    }
+    if (!Number.isFinite(scale) || scale <= 0) scale = 1
 
     container.value.scale.set(scale)
     container.value.position.set(
@@ -333,9 +329,7 @@ export function useSpineRuntime(
   }
 
   async function loadDroppedSpine(atlas: string, json: string, textures: Map<string, File>) {
-    if (!initialized.value) {
-      await initApp()
-    }
+    if (!initialized.value) await initApp()
 
     loading.value = true
     const PIXI = window.PIXI
@@ -385,11 +379,22 @@ export function useSpineRuntime(
       app.value.renderer.resize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)
       if (currentSpine.value) {
         const anim = animations.value.find((a) => a.checked)
-        if (anim) {
-          renderToStage(currentSpine.value, undefined)
-        }
+        if (anim) renderToStage(currentSpine.value, undefined)
       }
     }
+  }
+
+  function destroy() {
+    if (app.value) {
+      app.value.destroy(true, { children: true, texture: true, baseTexture: true })
+      app.value = null
+    }
+    container.value = null
+    currentSpine.value = null
+    animations.value = []
+    loading.value = false
+    error.value = null
+    initialized.value = false
   }
 
   return {
@@ -409,5 +414,6 @@ export function useSpineRuntime(
     resetAllAnimation,
     renderToStage,
     resizeCanvas,
+    destroy,
   }
 }

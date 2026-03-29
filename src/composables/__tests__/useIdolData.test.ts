@@ -54,7 +54,9 @@ describe('useIdolData', () => {
     const list1 = await fetchDressList(1, 'Mano')
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
     expect(globalThis.fetch).toHaveBeenCalledWith(`${API_BASE_URL}/dressList?idolId=1`)
-    expect(list1[0].dressName).toBe('Dress 1')
+    expect(list1).toHaveLength(1)
+    expect(list1[0]).toBeDefined()
+    expect(list1[0]!.dressName).toBe('Dress 1')
 
     // Second call for same idol should return cached data
     const list2 = await fetchDressList(1, 'Mano')
@@ -78,8 +80,10 @@ describe('useIdolData', () => {
 
     const list = await fetchDressList(91, 'Hazuki')
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
-    expect(global.fetch).toHaveBeenCalledWith(`${CF_BASE_URL}/others/hazuki.json`)
-    expect(list[0].dressName).toBe('Hazuki Normal')
+    expect(globalThis.fetch).toHaveBeenCalledWith(`${CF_BASE_URL}/others/hazuki.json`)
+    expect(list).toHaveLength(1)
+    expect(list[0]).toBeDefined()
+    expect(list[0]!.dressName).toBe('Hazuki Normal')
   })
 
   it('should handle fetch errors and update error state', async () => {

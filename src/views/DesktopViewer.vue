@@ -39,6 +39,7 @@ const {
   updateDress,
   updateIdol,
   updateType,
+  destroy,
 } = useViewerShared(canvasElementRef)
 
 function handleResize() {
@@ -57,6 +58,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  destroy()
 })
 </script>
 

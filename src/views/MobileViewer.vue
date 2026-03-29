@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AnimationPanel from '../components/AnimationPanel.vue'
 import CanvasStage from '../components/CanvasStage.vue'
 import ViewerControls from '../components/ViewerControls.vue'
@@ -7,6 +7,7 @@ import { useViewerShared } from '../composables/useViewerShared'
 
 const canvasStageRef = ref<InstanceType<typeof CanvasStage> | null>(null)
 const canvasElementRef = computed(() => canvasStageRef.value?.canvasRef ?? null)
+const viewportWidth = ref(window.innerWidth)
 
 const {
   animations,
@@ -35,9 +36,23 @@ const {
   updateDress,
   updateIdol,
   updateType,
+  destroy,
 } = useViewerShared(canvasElementRef)
 
 const showMenuDrawer = ref(false)
+
+function handleResize() {
+  viewportWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  destroy()
+})
 </script>
 
 <template>
