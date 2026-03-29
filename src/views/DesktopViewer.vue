@@ -102,16 +102,11 @@ onUnmounted(() => {
         Controls
       </n-button>
       <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
-      <n-spin
-        v-if="loading"
-        style="
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        "
-      />
+      <Transition name="loading-overlay" appear>
+        <div v-if="loading" class="loading-backdrop">
+          <n-spin size="large" />
+        </div>
+      </Transition>
       <n-alert
         v-if="error"
         type="error"
@@ -195,3 +190,26 @@ onUnmounted(() => {
     Link is copied!
   </n-alert>
 </template>
+
+<style scoped>
+.loading-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(0.3rem);
+  z-index: 10;
+}
+
+.loading-overlay-enter-active,
+.loading-overlay-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.loading-overlay-enter-from,
+.loading-overlay-leave-to {
+  opacity: 0;
+}
+</style>
