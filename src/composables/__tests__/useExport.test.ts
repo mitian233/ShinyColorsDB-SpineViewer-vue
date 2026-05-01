@@ -8,8 +8,10 @@ describe('useExport', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockContainer = {}
+    mockContainer = { children: [{}] }
+    const mockStage = {}
     mockApp = {
+      stage: mockStage,
       renderer: {
         extract: {
           image: vi.fn().mockResolvedValue({ src: 'data:image/png;base64,mock' }),
@@ -65,7 +67,7 @@ describe('useExport', () => {
 
     const anchor = (document.createElement as any).mock.results[0].value
 
-    expect(mockApp.renderer.extract.image).toHaveBeenCalledWith(mockContainer)
+    expect(mockApp.renderer.extract.image).toHaveBeenCalledWith(mockApp.stage)
     expect(anchor.href).toBe('data:image/png;base64,mock')
     expect(anchor.click).toHaveBeenCalled()
     // Validation: ':' -> '_', '/' -> '_', '"' -> '_', '<' -> '_', '>' -> '_'

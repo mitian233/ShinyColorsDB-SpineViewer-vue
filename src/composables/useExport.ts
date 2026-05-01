@@ -7,10 +7,13 @@ export function useExport(
   async function saveImage(): Promise<void> {
     const app = getApp()
     const container = getContainer()
-    if (!app || !container) return
+    if (!app || !container || container.children.length === 0) return
 
-    const renderer = app.renderer
-    const image = await renderer.extract.image(container)
+    // Extract from the stage instead of the container to avoid clipping
+    // when the container has scale > 1. The extract system internally
+    // renders to a RenderTexture which starts transparent, so the saved
+    // PNG will have a transparent background with the character centered.
+    const image = await app.renderer.extract.image(app.stage)
     const anchor = document.createElement('a')
 
     const idolName = getIdolName()
