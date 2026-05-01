@@ -9,18 +9,14 @@ export function useExport(
     const container = getContainer()
     if (!app || !container || container.children.length === 0) return
 
-    // Extract from the stage instead of the container to avoid clipping
-    // when the container has scale > 1. The extract system internally
-    // renders to a RenderTexture which starts transparent, so the saved
-    // PNG will have a transparent background with the character centered.
-    const image = await app.renderer.extract.image(app.stage)
-    const anchor = document.createElement('a')
+    const renderer = app.renderer
+    const image = await renderer.extract.image(container)
 
+    const anchor = document.createElement('a')
     const idolName = getIdolName()
     const dressInfo = getDressInfo()
     const fileName = `${idolName}-${dressInfo.category}-${dressInfo.name}-${dressInfo.type}.png`
-    const invalidRegex = /[<>:"\/\\|?*\x00-\x1F]/g
-    const validFileName = fileName.replace(invalidRegex, '_')
+    const validFileName = fileName.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_')
 
     anchor.download = validFileName
     anchor.href = image.src

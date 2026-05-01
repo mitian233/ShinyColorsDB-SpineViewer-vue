@@ -279,6 +279,8 @@ export function useSpineRuntime(
   async function renderToStage(spine: any, _dressType?: DressTypeKey) {
     if (!app.value || !container.value) return
 
+    const PIXI = window.PIXI
+
     if (isContinuousShootingEnabled.value) {
       spine.state.clearTracks()
       spine.skeleton.setToSetupPose()
@@ -311,6 +313,14 @@ export function useSpineRuntime(
     const boundY = Number.isFinite(chosenBound.y) ? chosenBound.y : 0
 
     spine.position.set(-boundX, -boundY)
+
+    // Add invisible sprite to define capture bounds (like old project)
+    const emptySprite = PIXI.Sprite.from(PIXI.Texture.EMPTY)
+    emptySprite.alpha = 0
+    emptySprite.width = boundWidth + 50
+    emptySprite.height = boundHeight + 20
+    emptySprite.position.set(-25, -10)
+    container.value.addChild(emptySprite)
 
     const canvasWidth = app.value.renderer.width
     const canvasHeight = app.value.renderer.height

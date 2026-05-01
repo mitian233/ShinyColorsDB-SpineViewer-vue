@@ -4,12 +4,15 @@ import { useExport } from '../useExport'
 describe('useExport', () => {
   let mockApp: any
   let mockContainer: any
+  let mockStage: any
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockContainer = { children: [{}] }
-    const mockStage = {}
+    mockContainer = {
+      children: [{}],
+    }
+    mockStage = {}
     mockApp = {
       stage: mockStage,
       renderer: {
@@ -67,10 +70,9 @@ describe('useExport', () => {
 
     const anchor = (document.createElement as any).mock.results[0].value
 
-    expect(mockApp.renderer.extract.image).toHaveBeenCalledWith(mockApp.stage)
+    expect(mockApp.renderer.extract.image).toHaveBeenCalledWith(mockContainer)
     expect(anchor.href).toBe('data:image/png;base64,mock')
     expect(anchor.click).toHaveBeenCalled()
-    // Validation: ':' -> '_', '/' -> '_', '"' -> '_', '<' -> '_', '>' -> '_'
     expect(anchor.download).toBe('Idol_Name-Cat_egory-Dr_ess-Ty_p_e.png')
   })
 
