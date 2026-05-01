@@ -11,13 +11,12 @@ export function useExport(
 
     const renderer = app.renderer
     const image = await renderer.extract.image(container)
-    const anchor = document.createElement('a')
 
+    const anchor = document.createElement('a')
     const idolName = getIdolName()
     const dressInfo = getDressInfo()
     const fileName = `${idolName}-${dressInfo.category}-${dressInfo.name}-${dressInfo.type}.png`
-    const invalidRegex = /[<>:"\/\\|?*\x00-\x1F]/g
-    const validFileName = fileName.replace(invalidRegex, '_')
+    const validFileName = fileName.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_')
 
     anchor.download = validFileName
     anchor.href = image.src
