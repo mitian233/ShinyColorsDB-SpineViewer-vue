@@ -12,6 +12,10 @@
     {
       "source": "/spine/:path*",
       "destination": "https://cf-static.shinycolors.moe/spine/:path*"
+    },
+    {
+      "source": "/((?!api|cf|spine).*)",
+      "destination": "/index.html"
     }
   ]
 }
