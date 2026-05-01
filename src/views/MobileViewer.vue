@@ -56,7 +56,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="position: relative; width: 100vw; height: 100vh; overflow: hidden">
+  <div style="position: relative; width: 100vw; height: 100dvh; overflow: hidden">
     <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
     <Transition name="loading-overlay" appear>
       <div v-if="loading" class="loading-backdrop">
@@ -67,13 +67,14 @@ onUnmounted(() => {
       v-if="error"
       type="error"
       title="Load Failed"
-      style="position: absolute; left: 12px; right: 12px; bottom: 76px"
+      style="position: absolute; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px))"
     >
       {{ error.message }}
     </n-alert>
 
     <n-space
-      class="absolute right-3 bottom-3 left-3 z-20 rounded-sm border border-slate-200/80 bg-white/88 p-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md"
+      class="absolute right-3 left-3 z-20 rounded-sm border border-slate-200/80 bg-white/88 p-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md"
+      style="bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px))"
       justify="space-between"
     >
       <n-button class="min-w-20" @click="showMenuDrawer = true">Menu</n-button>
@@ -88,7 +89,7 @@ onUnmounted(() => {
       style="
         position: fixed;
         left: 50%;
-        bottom: 84px;
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
         transform: translateX(-50%);
         z-index: 50;
         width: min(320px, calc(100vw - 24px));
@@ -125,7 +126,7 @@ onUnmounted(() => {
     </n-card>
   </n-modal>
 
-  <n-drawer v-model:show="showMenuDrawer" placement="bottom" height="78vh">
+  <n-drawer v-model:show="showMenuDrawer" placement="bottom" height="78dvh">
     <n-drawer-content title="Controls" closable>
       <ViewerControls
         :idol-id="idolId ?? null"
@@ -149,7 +150,7 @@ onUnmounted(() => {
     </n-drawer-content>
   </n-drawer>
 
-  <n-drawer v-model:show="showAnimationDrawer" placement="bottom" height="78vh">
+  <n-drawer v-model:show="showAnimationDrawer" placement="bottom" height="78dvh">
     <n-drawer-content title="Animation" closable>
       <AnimationPanel
         :animations="animations"
