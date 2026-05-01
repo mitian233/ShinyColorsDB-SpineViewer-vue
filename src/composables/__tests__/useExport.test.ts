@@ -14,6 +14,7 @@ describe('useExport', () => {
     }
     mockStage = {}
     mockApp = {
+      stage: mockStage,
       renderer: {
         extract: {
           image: vi.fn().mockResolvedValue({ src: 'data:image/png;base64,mock' }),
