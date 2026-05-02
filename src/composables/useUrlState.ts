@@ -93,12 +93,19 @@ function getInitialParams(): UrlParams {
   return { ...storage, ...url }
 }
 
+function getDefaultRenderer(): 'webgl' | 'webgpu' {
+  if (/(Android|iPhone|iPad)/i.test(navigator.userAgent)) {
+    return 'webgl'
+  }
+  return 'webgpu'
+}
+
 export function useUrlState() {
   const initial = getInitialParams()
   const idolId = ref<number | undefined>(initial.idolId ?? 1)
   const enzaId = ref<string | undefined>(initial.enzaId)
   const dressType = ref<DressTypeKey | undefined>(initial.dressType)
-  const renderer = ref<'webgl' | 'webgpu'>(initial.renderer ?? 'webgpu')
+  const renderer = ref<'webgl' | 'webgpu'>(initial.renderer ?? getDefaultRenderer())
   const backgroundColor = ref<string>(initial.backgroundColor ?? '#000000')
   const continuousShootingEnabled = ref<boolean>(initial.continuousShootingEnabled ?? false)
   const urlFlag = ref(false)
