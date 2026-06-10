@@ -48,6 +48,7 @@ export function useSpineRuntime(
       view: canvasRef.value,
       width: canvasRef.value.clientWidth - 1,
       height: canvasRef.value.clientHeight - 1,
+      preserveDrawingBuffer: true,
     })
 
     app.value = appInstance

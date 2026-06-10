@@ -4,20 +4,25 @@ import { useExport } from '../useExport'
 describe('useExport', () => {
   let mockApp: any
   let mockContainer: any
-  let mockStage: any
+  let mockCanvas: any
 
   beforeEach(() => {
     vi.clearAllMocks()
 
+    mockCanvas = {
+      toBlob: vi.fn((callback) => {
+        const blob = new Blob(['mock'], { type: 'image/png' })
+        callback(blob)
+      }),
+    }
+
     mockContainer = {
       children: [{}],
     }
-    mockStage = {}
     mockApp = {
-      stage: mockStage,
       renderer: {
         extract: {
-          image: vi.fn().mockResolvedValue({ src: 'data:image/png;base64,mock' }),
+          canvas: vi.fn().mockReturnValue(mockCanvas),
         },
       },
     }
@@ -43,6 +48,10 @@ describe('useExport', () => {
       }
       return originalCreateElement.call(document, tagName)
     }) as any
+
+    // Mock URL.createObjectURL and revokeObjectURL
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
   })
 
   it('should successfully copy link to clipboard', async () => {
@@ -70,13 +79,12 @@ describe('useExport', () => {
 
     const anchor = (document.createElement as any).mock.results[0].value
 
-    expect(mockApp.renderer.extract.image).toHaveBeenCalledWith(mockContainer)
-    expect(anchor.href).toBe('data:image/png;base64,mock')
+    expect(mockApp.renderer.extract.canvas).toHaveBeenCalledWith(mockContainer)
     expect(anchor.click).toHaveBeenCalled()
     expect(anchor.download).toBe('Idol_Name-Cat_egory-Dr_ess-Ty_p_e.png')
   })
 
-  it('should not save image if app or container is missing', async () => {
+  it('should throw error if app or container is missing', async () => {
     const { saveImage } = useExport(
       () => null, // missing app
       () => mockContainer,
@@ -84,7 +92,6 @@ describe('useExport', () => {
       () => ({ category: 'A', name: 'B', type: 'C' })
     )
 
-    await saveImage()
-    expect(document.createElement).not.toHaveBeenCalled()
+    await expect(saveImage()).rejects.toThrow('No content to export')
   })
 })

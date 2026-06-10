@@ -155,6 +155,7 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
   const showCopiedToast = ref(false)
   const showThanksModal = ref(false)
   const showWebGLModal = ref(false)
+  const saveError = ref<string | null>(null)
 
   async function initialize() {
     const PIXI = window.PIXI
@@ -267,8 +268,15 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
     }, 2000)
   }
 
-  function handleSave() {
-    void saveImage()
+  async function handleSave() {
+    try {
+      saveError.value = null
+      await saveImage()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to save image'
+      saveError.value = message
+      console.error('Save image failed:', e)
+    }
   }
 
   function openDatabase() {
@@ -322,6 +330,7 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
     isContinuousShootingEnabled,
     loading,
     openDatabase,
+    saveError,
     selectedDressIndex,
     showAnimationDrawer,
     showCopiedToast,

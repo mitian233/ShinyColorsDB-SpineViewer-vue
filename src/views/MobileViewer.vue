@@ -27,6 +27,7 @@ const {
   isContinuousShootingEnabled,
   loading,
   openDatabase,
+  saveError,
   selectedDressIndex,
   showAnimationDrawer,
   showCopiedToast,
@@ -96,6 +97,24 @@ onUnmounted(() => {
       "
     >
       Link is copied!
+    </n-alert>
+
+    <n-alert
+      v-if="saveError"
+      type="error"
+      title="Save Failed"
+      closable
+      @close="saveError = null"
+      style="
+        position: fixed;
+        left: 50%;
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        z-index: 50;
+        width: min(320px, calc(100vw - 24px));
+      "
+    >
+      {{ saveError }}
     </n-alert>
   </div>
 
