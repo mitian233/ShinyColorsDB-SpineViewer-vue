@@ -1,20 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useExport } from '../useExport'
 
+// Minimal valid 1×1 transparent PNG as a data URL for mocking extract.base64()
+const MOCK_PNG_BASE64 =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+
 describe('useExport', () => {
   let mockApp: any
   let mockContainer: any
-  let mockCanvas: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockCanvas = {
-      toBlob: vi.fn((callback) => {
-        const blob = new Blob(['mock'], { type: 'image/png' })
-        callback(blob)
-      }),
-    }
 
     mockContainer = {
       children: [{}],
@@ -22,7 +18,7 @@ describe('useExport', () => {
     mockApp = {
       renderer: {
         extract: {
-          canvas: vi.fn().mockReturnValue(mockCanvas),
+          base64: vi.fn().mockResolvedValue(MOCK_PNG_BASE64),
         },
       },
     }
@@ -52,6 +48,11 @@ describe('useExport', () => {
     // Mock URL.createObjectURL and revokeObjectURL
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+
+    // fetch is called to convert the base64 data URL returned by extract.base64() into a Blob
+    vi.mocked(fetch).mockResolvedValue({
+      blob: vi.fn().mockResolvedValue(new Blob(['mock'], { type: 'image/png' })),
+    } as any)
   })
 
   it('should successfully copy link to clipboard', async () => {
@@ -79,7 +80,7 @@ describe('useExport', () => {
 
     const anchor = (document.createElement as any).mock.results[0].value
 
-    expect(mockApp.renderer.extract.canvas).toHaveBeenCalledWith(mockContainer)
+    expect(mockApp.renderer.extract.base64).toHaveBeenCalledWith(mockContainer)
     expect(anchor.click).toHaveBeenCalled()
     expect(anchor.download).toBe('Idol_Name-Cat_egory-Dr_ess-Ty_p_e.png')
   })

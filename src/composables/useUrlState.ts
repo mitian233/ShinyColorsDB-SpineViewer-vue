@@ -93,11 +93,8 @@ function getInitialParams(): UrlParams {
   return { ...storage, ...url }
 }
 
-function getDefaultRenderer(): 'webgl' | 'webgpu' {
-  if (/(Android|iPhone|iPad)/i.test(navigator.userAgent)) {
-    return 'webgl'
-  }
-  return 'webgpu'
+function isMobileDevice(): boolean {
+  return /(Android|iPhone|iPad)/i.test(navigator.userAgent)
 }
 
 export function useUrlState() {
@@ -105,7 +102,12 @@ export function useUrlState() {
   const idolId = ref<number | undefined>(initial.idolId ?? 1)
   const enzaId = ref<string | undefined>(initial.enzaId)
   const dressType = ref<DressTypeKey | undefined>(initial.dressType)
-  const renderer = ref<'webgl' | 'webgpu'>(initial.renderer ?? getDefaultRenderer())
+  // Mobile devices always use WebGL regardless of stored preference:
+  // WebGPU on Android (Vulkan/Dawn) has canvas format mismatch issues that
+  // cause extract.canvas() to fail silently, breaking screenshot export.
+  const renderer = ref<'webgl' | 'webgpu'>(
+    isMobileDevice() ? 'webgl' : (initial.renderer ?? 'webgpu')
+  )
   const backgroundColor = ref<string>(initial.backgroundColor ?? '#000000')
   const continuousShootingEnabled = ref<boolean>(initial.continuousShootingEnabled ?? false)
   const urlFlag = ref(false)

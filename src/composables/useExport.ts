@@ -15,18 +15,6 @@ export function useExport(
     return fileName.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_')
   }
 
-  async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob)
-          else reject(new Error('Failed to create blob from canvas'))
-        },
-        'image/png'
-      )
-    })
-  }
-
   async function downloadViaAnchor(blob: Blob, fileName: string): Promise<void> {
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
@@ -56,8 +44,11 @@ export function useExport(
     }
 
     const renderer = app.renderer
-    const canvas = renderer.extract.canvas(container)
-    const blob = await canvasToBlob(canvas)
+    // extract.base64() is async and works correctly for both WebGL and WebGPU.
+    // The synchronous extract.canvas() returns an empty canvas under WebGPU because
+    // GPU pixel readback (GPUBuffer.mapAsync) is inherently async.
+    const base64 = await renderer.extract.base64(container)
+    const blob = await fetch(base64).then((r) => r.blob())
     const fileName = getFileName()
 
     // iOS: try navigator.share first, fall back to anchor download
