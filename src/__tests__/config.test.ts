@@ -15,9 +15,19 @@ describe('config.ts', () => {
     expect(API_BASE_URL).toBe('https://api.shinycolors.moe/spine')
     expect(CF_BASE_URL).toBe('https://cf-static.shinycolors.moe')
 
-    // Test getSpineUrl
-    expect(getSpineUrl('/some/path')).toBe('https://cf-static.shinycolors.moe/some/path')
-    expect(getSpineUrl('some/path')).toBe('https://cf-static.shinycolors.moe/some/path')
+    // Asset paths already include the spine/ prefix
+    expect(getSpineUrl('/spine/idols/stand/101/data.json')).toBe(
+      'https://cf-static.shinycolors.moe/spine/idols/stand/101/data.json',
+    )
+    expect(getSpineUrl('spine/awake_idols/cb_costume/1040030110/data.atlas')).toBe(
+      'https://cf-static.shinycolors.moe/spine/awake_idols/cb_costume/1040030110/data.atlas',
+    )
+    expect(getSpineUrl('/spine/support_idols/picture_motion/201/data.json')).toBe(
+      'https://cf-static.shinycolors.moe/spine/support_idols/picture_motion/201/data.json',
+    )
+    expect(getSpineUrl('/spine/idol_evolution_skins/cb_costume/12301/data.json')).toBe(
+      'https://cf-static.shinycolors.moe/spine/idol_evolution_skins/cb_costume/12301/data.json',
+    )
   })
 
   it('should use proxy paths when VITE_USE_PROXY is true', async () => {
@@ -29,8 +39,16 @@ describe('config.ts', () => {
     expect(API_BASE_URL).toBe('/api')
     expect(CF_BASE_URL).toBe('/cf')
 
-    // Test getSpineUrl
-    expect(getSpineUrl('/some/path')).toBe('/spine/some/path')
-    expect(getSpineUrl('some/path')).toBe('/spine/some/path')
+    // Proxy keeps the full /spine/... path (no double-prefix); Vercel/Vite rewrite it
+    expect(getSpineUrl('/spine/idols/stand/101/data.json')).toBe('/spine/idols/stand/101/data.json')
+    expect(getSpineUrl('spine/awake_idols/cb_costume/1040030110/data.atlas')).toBe(
+      '/spine/awake_idols/cb_costume/1040030110/data.atlas',
+    )
+    expect(getSpineUrl('/spine/support_idols/picture_motion/201/data.json')).toBe(
+      '/spine/support_idols/picture_motion/201/data.json',
+    )
+    expect(getSpineUrl('/spine/idol_evolution_skins/cb_costume/12301/data.json')).toBe(
+      '/spine/idol_evolution_skins/cb_costume/12301/data.json',
+    )
   })
 })

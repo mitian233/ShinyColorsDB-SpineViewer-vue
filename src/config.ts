@@ -4,9 +4,18 @@ export const API_BASE_URL = USE_PROXY ? '/api' : 'https://api.shinycolors.moe/sp
 
 export const CF_BASE_URL = USE_PROXY ? '/cf' : 'https://cf-static.shinycolors.moe'
 
+/**
+ * Build a Spine asset URL.
+ * Asset paths from the API already include the `spine/` prefix
+ * (e.g. `spine/idols/stand/101/data.json`, `spine/awake_idols/...`).
+ * - direct: https://cf-static.shinycolors.moe/spine/...
+ * - proxy:  /spine/...  (rewritten by Vite/Vercel to cf-static)
+ */
 export function getSpineUrl(path: string): string {
-  const base = USE_PROXY ? '/spine' : 'https://cf-static.shinycolors.moe'
-  return `${base}${path.startsWith('/') ? path : '/' + path}`
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  // Proxy base is empty: path already starts with /spine/...
+  const base = USE_PROXY ? '' : 'https://cf-static.shinycolors.moe'
+  return `${base}${normalized}`
 }
 
 export const config = {
