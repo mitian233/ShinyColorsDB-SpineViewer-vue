@@ -51,20 +51,24 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // API: /api/dresslist -> https://api.shinycolors.moe/spine/dresslist
       '/api': {
         target: 'https://api.shinycolors.moe',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/spine'),
       },
+      // Misc CF assets (non-spine)
       '/cf': {
         target: 'https://cf-static.shinycolors.moe',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cf/, ''),
       },
+      // Spine assets: path already includes /spine/... (idols, awake_idols,
+      // idol_evolution_skins, support_idols, sub_characters, etc.)
+      // /spine/idols/stand/101/data.json -> cf-static.shinycolors.moe/spine/idols/...
       '/spine': {
         target: 'https://cf-static.shinycolors.moe',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/spine/, '/spine'),
       },
     },
   },
