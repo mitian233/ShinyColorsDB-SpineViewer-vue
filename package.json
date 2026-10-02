@@ -15,9 +15,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@vicons/ionicons5": "^0.13.0",
-    "naive-ui": "^2.44.0",
     "pinia": "^3.0.4",
+    "reka-ui": "^2.10.5",
+    "shiny-colors-ui": "file:vendor/shiny-colors-ui-0.1.0.tgz",
     "vue": "^3.5.25",
     "vue-router": "^5.0.3"
   },
@@ -38,8 +38,6 @@
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.61.0",
-    "unplugin-auto-import": "^21.0.0",
-    "unplugin-vue-components": "^31.0.0",
     "vite": "^8.0.0",
     "vite-plugin-vue-devtools": "^8.1.3",
     "vitest": "^4.1.0",

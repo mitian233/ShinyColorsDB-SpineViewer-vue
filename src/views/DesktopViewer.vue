@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { ScButton, ScLoader } from 'shiny-colors-ui'
+import ViewerDrawer from '../components/ViewerDrawer.vue'
+import ViewerFeedback from '../components/ViewerFeedback.vue'
+import ViewerNotice from '../components/ViewerNotice.vue'
 import AnimationPanel from '../components/AnimationPanel.vue'
 import CanvasStage from '../components/CanvasStage.vue'
 import ViewerControls from '../components/ViewerControls.vue'
@@ -64,14 +68,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <n-layout has-sider style="height: 100dvh">
-    <n-layout-sider
-      v-if="isWideLayout"
-      bordered
-      :width="320"
-      :collapsed-width="0"
-      content-style="padding: 16px; overflow-y: auto"
-    >
+  <div class="desktop-viewer">
+    <aside v-if="isWideLayout" class="desktop-viewer__sidebar" aria-label="設定">
       <ViewerControls
         :idol-id="idolId ?? null"
         :selected-dress-index="selectedDressIndex"
@@ -92,118 +90,99 @@ onUnmounted(() => {
         @share="handleShare"
         @save="handleSave"
       />
-    </n-layout-sider>
-
-    <n-layout-content>
-      <n-button
+    </aside>
+    <main class="desktop-viewer__stage">
+      <ScButton
         v-if="!isWideLayout"
-        style="position: absolute; top: 16px; left: 16px; z-index: 20"
+        class="desktop-viewer__menu"
+        size="sm"
         @click="showMenuDrawer = true"
       >
-        Controls
-      </n-button>
+        設定
+      </ScButton>
       <CanvasStage ref="canvasStageRef" @drop="handleDrop" />
       <Transition name="loading-overlay" appear>
         <div v-if="loading" class="loading-backdrop">
-          <n-spin size="large" />
+          <ScLoader size="lg" label="読み込み中…" />
         </div>
       </Transition>
-      <n-alert
-        v-if="error"
-        type="error"
-        title="Load Failed"
-        style="position: absolute; left: 16px; right: 16px; bottom: 16px"
-      >
-        {{ error.message }}
-      </n-alert>
-    </n-layout-content>
-  </n-layout>
+      <ViewerNotice v-if="error" title="読み込みに失敗しました" class="desktop-viewer__error">
+        アニメーションを読み込めませんでした。通信環境を確認して、もう一度お試しください。
+      </ViewerNotice>
+    </main>
+  </div>
 
-  <n-modal v-model:show="showWebGLModal" :mask-closable="false">
-    <n-card title="Legacy Mode Detected" style="width: min(560px, calc(100vw - 2rem))">
-      <n-text>Hardware acceleration is required for PIXI.js to run in WebGL mode.</n-text>
-      <template #action>
-        <n-space justify="end">
-          <n-button type="primary" @click="showWebGLModal = false">閉じる</n-button>
-        </n-space>
-      </template>
-    </n-card>
-  </n-modal>
+  <ViewerDrawer v-model:open="showAnimationDrawer" title="アニメーション">
+    <AnimationPanel
+      :animations="animations"
+      @toggle="handleAnimationToggle"
+      @reset="handleAnimationReset"
+      @close="showAnimationDrawer = false"
+    />
+  </ViewerDrawer>
 
-  <n-modal v-model:show="showThanksModal">
-    <n-card title="特別感謝" style="width: min(560px, calc(100vw - 2rem))">
-      <n-space vertical :size="8">
-        <n-text strong>技術諮詢</n-text>
-        <n-text>TWY</n-text>
-        <n-text strong>爆肝小夥伴</n-text>
-        <n-text>木下梨花 KaiOuO Lycoris 剎那 十秒十六胎 匿名小夥伴一號 原田蜜柑</n-text>
-      </n-space>
-      <template #action>
-        <n-space justify="end">
-          <n-button @click="showThanksModal = false">閉じる</n-button>
-        </n-space>
-      </template>
-    </n-card>
-  </n-modal>
+  <ViewerDrawer v-model:open="showMenuDrawer" title="設定" placement="left">
+    <ViewerControls
+      :idol-id="idolId ?? null"
+      :selected-dress-index="selectedDressIndex"
+      :dress-type="dressType ?? null"
+      :background-color="backgroundColor"
+      :idol-options="idolOptions"
+      :dress-options="dressOptions"
+      :type-options="typeOptions"
+      :continuous-shooting-enabled="isContinuousShootingEnabled"
+      @update:idol="updateIdol"
+      @update:dress="updateDress"
+      @update:type="updateType"
+      @update:background-color="handleColorChange"
+      @update:continuous-shooting-enabled="handleContinuousShootingChange"
+      @open-animation="showAnimationDrawer = true"
+      @open-database="openDatabase"
+      @open-thanks="showThanksModal = true"
+      @share="handleShare"
+      @save="handleSave"
+    />
+  </ViewerDrawer>
 
-  <n-drawer v-model:show="showAnimationDrawer" placement="right" :width="360">
-    <n-drawer-content title="Animation" closable>
-      <AnimationPanel
-        :animations="animations"
-        @toggle="handleAnimationToggle"
-        @reset="handleAnimationReset"
-        @close="showAnimationDrawer = false"
-      />
-    </n-drawer-content>
-  </n-drawer>
-
-  <n-drawer v-model:show="showMenuDrawer" placement="left" width="min(360px, 88vw)">
-    <n-drawer-content title="Controls" :closable="!isWideLayout">
-      <ViewerControls
-        :idol-id="idolId ?? null"
-        :selected-dress-index="selectedDressIndex"
-        :dress-type="dressType ?? null"
-        :background-color="backgroundColor"
-        :idol-options="idolOptions"
-        :dress-options="dressOptions"
-        :type-options="typeOptions"
-        :continuous-shooting-enabled="isContinuousShootingEnabled"
-        @update:idol="updateIdol"
-        @update:dress="updateDress"
-        @update:type="updateType"
-        @update:background-color="handleColorChange"
-        @update:continuous-shooting-enabled="handleContinuousShootingChange"
-        @open-animation="showAnimationDrawer = true"
-        @open-database="openDatabase"
-        @open-thanks="showThanksModal = true"
-        @share="handleShare"
-        @save="handleSave"
-      />
-    </n-drawer-content>
-  </n-drawer>
-
-  <n-alert
-    v-if="showCopiedToast"
-    type="success"
-    title="Copied"
-    style="position: fixed; right: 16px; bottom: 16px; z-index: 50; width: 240px"
-  >
-    Link is copied!
-  </n-alert>
-
-  <n-alert
-    v-if="saveError"
-    type="error"
-    title="Save Failed"
-    closable
-    style="position: fixed; right: 16px; bottom: 60px; z-index: 50; width: 240px"
-    @close="saveError = null"
-  >
-    {{ saveError }}
-  </n-alert>
+  <ViewerFeedback
+    v-model:webgl-open="showWebGLModal"
+    v-model:thanks-open="showThanksModal"
+    v-model:save-error="saveError"
+    :copied="showCopiedToast"
+  />
 </template>
 
 <style scoped>
+.desktop-viewer {
+  display: flex;
+  height: 100dvh;
+}
+.desktop-viewer__sidebar {
+  flex: 0 0 320px;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--sc-surface);
+  border-right: 2px solid var(--sc-line);
+}
+.desktop-viewer__stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.desktop-viewer__menu {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+}
+.desktop-viewer__error {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+}
+
 .loading-backdrop {
   position: absolute;
   inset: 0;

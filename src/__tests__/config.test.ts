@@ -18,6 +18,9 @@ describe('config.ts', () => {
     // Test getSpineUrl
     expect(getSpineUrl('/some/path')).toBe('https://cf-static.shinycolors.moe/some/path')
     expect(getSpineUrl('some/path')).toBe('https://cf-static.shinycolors.moe/some/path')
+    expect(getSpineUrl('spine/idols/stand/1040010010/data.json')).toBe(
+      'https://cf-static.shinycolors.moe/spine/idols/stand/1040010010/data.json'
+    )
   })
 
   it('should use proxy paths when VITE_USE_PROXY is true', async () => {
@@ -32,5 +35,11 @@ describe('config.ts', () => {
     // Test getSpineUrl
     expect(getSpineUrl('/some/path')).toBe('/spine/some/path')
     expect(getSpineUrl('some/path')).toBe('/spine/some/path')
+    expect(getSpineUrl('/spine/idols/stand/1040010010/data.json')).toBe(
+      '/spine/idols/stand/1040010010/data.json'
+    )
+    expect(getSpineUrl('spine/idols/stand/1040010010/data.atlas')).toBe(
+      '/spine/idols/stand/1040010010/data.atlas'
+    )
   })
 })

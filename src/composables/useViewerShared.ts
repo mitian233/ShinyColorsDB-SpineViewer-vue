@@ -25,10 +25,11 @@ export type ViewerSelectGroupOption = {
 }
 
 const SPINE_TYPE_LABELS: Record<string, string> = {
-  cb: 'Q版_通常服',
-  cb_costume: 'Q版_演出服',
-  stand: '一般_通常服',
-  stand_costume: '一般_演出服',
+  cb: 'SD・通常衣装',
+  cb_costume: 'SD・ライブ衣装',
+  stand: '立ち絵・通常衣装',
+  stand_costume: '立ち絵・ライブ衣装',
+  picture_motion: 'イラストアニメーション',
 }
 
 const ASSET_CATEGORY_LABELS: Record<string, string> = {
@@ -39,6 +40,23 @@ const ASSET_CATEGORY_LABELS: Record<string, string> = {
 }
 
 const DEFAULT_TYPE_PREFERENCE = ['stand', 'stand_costume', 'cb', 'cb_costume']
+
+const DRESS_CATEGORY_LABELS: Record<string, string> = {
+  P_UR: 'プロデュース UR',
+  S_UR: 'サポート UR',
+  P_SSR: 'プロデュース SSR',
+  S_SSR: 'サポート SSR',
+  P_SR: 'プロデュース SR',
+  S_SR: 'サポート SR',
+  P_R: 'プロデュース R',
+  S_R: 'サポート R',
+  Mizugi: '水着',
+  Special: '特別衣装',
+  Anniversary: 'アニバーサリー',
+  FesReward: 'フェス報酬',
+  FesTour: 'フェスツアー',
+  unknown: '未分類',
+}
 
 interface TypeOption {
   value: string
@@ -53,15 +71,15 @@ function buildAssetTypeLabel(category: string, spineType: string, index?: number
   const categoryLabel = ASSET_CATEGORY_LABELS[category] ?? category
   const typeLabel = getSpineTypeLabel(spineType)
   if (categoryLabel && index !== undefined) {
-    return `${categoryLabel}${index + 1}_${typeLabel}`
+    return `${categoryLabel}${index + 1}・${typeLabel}`
   }
   if (categoryLabel) {
-    return `${categoryLabel}_${typeLabel}`
+    return `${categoryLabel}・${typeLabel}`
   }
   return typeLabel
 }
 
-function buildTypeOptionsFromAssets(assets: DressInfo['assets']): TypeOption[] {
+export function buildTypeOptionsFromAssets(assets: DressInfo['assets']): TypeOption[] {
   if (!assets) return []
 
   const options: TypeOption[] = []
@@ -126,16 +144,17 @@ function buildTypeOptionsFromAssets(assets: DressInfo['assets']): TypeOption[] {
   return options
 }
 
-function getDefaultAssetPath(assets: DressInfo['assets']): string | undefined {
+export function getDefaultAssetPath(assets: DressInfo['assets']): string | undefined {
   if (!assets) return undefined
 
   // Prefer support_idols stand_costume (サポート_一般_通常服) if available
   if (assets.support_idols) {
-    const supportEntry = assets.support_idols.find((e) => e.type === 'stand' && e.path) || assets.support_idols.find((e) => e.type === 'picture_motion' && e.path)
+    const supportEntry =
+      assets.support_idols.find((e) => e.type === 'stand' && e.path) ||
+      assets.support_idols.find((e) => e.type === 'picture_motion' && e.path)
     if (supportEntry) {
       return supportEntry.path
-    }
-    else {
+    } else {
       // return first element
       const firstSupportEntry = assets.support_idols.find((e) => e.path)
       if (firstSupportEntry) {
@@ -226,7 +245,7 @@ export function useViewerShared(canvasElementRef: Ref<HTMLCanvasElement | null>)
         const bOrder = bIdx >= 0 ? bIdx : DRESS_TYPE_ORDER.length
         return aOrder - bOrder
       })
-      .map(([label, items]) => ({ label, items }))
+      .map(([label, items]) => ({ label: DRESS_CATEGORY_LABELS[label] ?? label, items }))
   })
 
   const idolOptions = computed<ViewerSelectOption[]>(() =>

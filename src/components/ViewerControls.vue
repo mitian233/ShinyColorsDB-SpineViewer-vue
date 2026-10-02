@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { ScButton, ScSelect, ScSwitch } from 'shiny-colors-ui'
+import ViewerDressSelect from './ViewerDressSelect.vue'
+import ViewerColorPicker from './ViewerColorPicker.vue'
 import type { ViewerSelectGroupOption, ViewerSelectOption } from '../composables/useViewerShared'
 
 const props = withDefaults(
@@ -13,9 +17,7 @@ const props = withDefaults(
     continuousShootingEnabled: boolean
     showActionButtons?: boolean
   }>(),
-  {
-    showActionButtons: true,
-  }
+  { showActionButtons: true }
 )
 
 const emit = defineEmits<{
@@ -30,106 +32,84 @@ const emit = defineEmits<{
   (e: 'share'): void
   (e: 'save'): void
 }>()
+
+const idolItems = computed(() =>
+  props.idolOptions.map((item) => ({ ...item, value: String(item.value) }))
+)
+const typeItems = computed(() =>
+  props.typeOptions.map((item) => ({ ...item, value: String(item.value) }))
+)
+
+function updateIdol(value?: string) {
+  if (value !== undefined && value !== '' && Number.isInteger(Number(value))) {
+    emit('update:idol', Number(value))
+  }
+}
 </script>
 
 <template>
-  <n-space vertical :size="12">
-    <n-text
-      depth="3"
-      style="
-        font-size: 0.83rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      "
-    >
-      Idol
-    </n-text>
-    <n-select
-      :value="props.idolId"
-      :options="props.idolOptions"
-      @update:value="(value: any) => emit('update:idol', value)"
+  <div class="viewer-controls">
+    <ScSelect
+      label="アイドル"
+      :model-value="props.idolId === null ? undefined : String(props.idolId)"
+      :items="idolItems"
+      :disabled="idolItems.length === 0"
+      placeholder="アイドルを選択"
+      @update:model-value="updateIdol"
     />
-
-    <n-text
-      depth="3"
-      style="
-        font-size: 0.83rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      "
-    >
-      Dress
-    </n-text>
-    <n-select
-      :value="props.selectedDressIndex"
-      :options="props.dressOptions"
-      @update:value="(value: any) => emit('update:dress', value)"
+    <ViewerDressSelect
+      :model-value="props.selectedDressIndex"
+      :groups="props.dressOptions"
+      @update:model-value="emit('update:dress', $event)"
     />
-
-    <n-text
-      depth="3"
-      style="
-        font-size: 0.83rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      "
-    >
-      Type
-    </n-text>
-    <n-select
-      :value="props.dressType"
-      :options="props.typeOptions"
-      @update:value="(value: any) => emit('update:type', value)"
+    <ScSelect
+      label="表示タイプ"
+      :model-value="props.dressType ?? undefined"
+      :items="typeItems"
+      :disabled="typeItems.length === 0"
+      placeholder="表示タイプを選択"
+      @update:model-value="emit('update:type', $event ?? null)"
     />
-
-    <n-text
-      depth="3"
-      style="
-        font-size: 0.83rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      "
-    >
-      Animation
-    </n-text>
-    <n-button type="primary" block @click="emit('openAnimation')">Animation List</n-button>
-
-    <n-text
-      depth="3"
-      style="
-        font-size: 0.83rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      "
-    >
-      Background Color
-    </n-text>
-    <n-color-picker
-      :value="props.backgroundColor"
-      :show-alpha="false"
-      @update:value="(value: any) => emit('update:backgroundColor', value)"
+    <div class="viewer-controls__field">
+      <span class="sc-field-label">アニメーション</span>
+      <ScButton variant="primary" @click="emit('openAnimation')">アニメーション一覧</ScButton>
+    </div>
+    <ViewerColorPicker
+      :model-value="props.backgroundColor"
+      @update:model-value="emit('update:backgroundColor', $event)"
     />
-
-    <n-switch
-      :value="props.continuousShootingEnabled"
-      @update:value="(value: any) => emit('update:continuousShootingEnabled', value)"
-    >
-      <template #checked>Continuous shooting</template>
-      <template #unchecked>Continuous shooting</template>
-    </n-switch>
-
-    <n-divider />
-    <n-button block tertiary @click="emit('openDatabase')">ShinyColors Database</n-button>
-    <n-button block tertiary @click="emit('openThanks')">Special Thanks</n-button>
-
-    <template v-if="props.showActionButtons">
-      <n-button block @click="emit('share')">Share</n-button>
-      <n-button block @click="emit('save')">Save</n-button>
-    </template>
-  </n-space>
+    <ScSwitch
+      label="連続撮影"
+      :model-value="props.continuousShootingEnabled"
+      @update:model-value="emit('update:continuousShootingEnabled', $event)"
+    />
+    <hr class="viewer-divider" />
+    <ScButton size="sm" @click="emit('openDatabase')">シャイニーカラーズDB</ScButton>
+    <ScButton size="sm" @click="emit('openThanks')">スペシャルサンクス</ScButton>
+    <div v-if="props.showActionButtons" class="viewer-controls__actions">
+      <ScButton size="sm" @click="emit('share')">リンクを共有</ScButton>
+      <ScButton size="sm" variant="primary" @click="emit('save')">画像を保存</ScButton>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.viewer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.viewer-controls__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewer-controls__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+</style>

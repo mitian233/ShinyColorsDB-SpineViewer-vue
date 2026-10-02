@@ -69,7 +69,9 @@ describe('CanvasStage.vue', () => {
     // @ts-ignore
     await wrapper.vm.handleDrop(dropEvent)
 
-    expect(window.alert).toHaveBeenCalledWith('missing files!')
+    expect(window.alert).toHaveBeenCalledWith(
+      '必要なファイルが不足しています。.atlas、.json と画像ファイルを一緒に追加してください。'
+    )
     expect(wrapper.emitted('drop')).toBeFalsy()
   })
 

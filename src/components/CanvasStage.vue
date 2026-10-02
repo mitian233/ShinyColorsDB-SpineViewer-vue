@@ -51,7 +51,7 @@ function handleDrop(event: DragEvent) {
   if (pathAtlas && pathJSON && pathTexture.size > 0) {
     emit('drop', pathAtlas, pathJSON, pathTexture)
   } else {
-    alert('missing files!')
+    alert('必要なファイルが不足しています。.atlas、.json と画像ファイルを一緒に追加してください。')
   }
 }
 

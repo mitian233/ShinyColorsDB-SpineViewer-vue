@@ -1,90 +1,49 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { mount, enableAutoUnmount } from '@vue/test-utils'
+import { afterEach, describe, it, expect } from 'vitest'
 import AnimationPanel from '../AnimationPanel.vue'
-import { NButton, NCheckbox, NScrollbar } from 'naive-ui'
 import type { AnimationItem } from '../../types'
 
+enableAutoUnmount(afterEach)
+
 describe('AnimationPanel.vue', () => {
-  const mockAnimations: AnimationItem[] = [
+  const animations: AnimationItem[] = [
     { name: 'wait', trackIndex: 0, checked: true },
-    { name: 'talk', trackIndex: 1, checked: false },
-    { name: 'smile', trackIndex: 2, checked: false },
+    { name: 'talk', trackIndex: 4, checked: false },
+    { name: 'smile', trackIndex: 8, checked: false },
   ]
 
-  it('renders correctly with animations', () => {
-    const wrapper = mount(AnimationPanel as any, {
-      props: {
-        animations: mockAnimations,
-      },
-      global: {
-        components: { NButton, NCheckbox, NScrollbar },
-      },
+  it('renders animation labels and controlled checkbox states', async () => {
+    const wrapper = mount(AnimationPanel, { props: { animations } })
+    const checkboxes = wrapper.findAll('[role="checkbox"]')
+    expect(checkboxes).toHaveLength(3)
+    expect(checkboxes[0]!.attributes('aria-label')).toBe('wait')
+    expect(checkboxes[0]!.attributes('aria-checked')).toBe('true')
+    expect(checkboxes[1]!.attributes('aria-checked')).toBe('false')
+    await wrapper.setProps({
+      animations: animations.map((animation) => ({ ...animation, checked: true })),
     })
-
-    expect(wrapper.exists()).toBe(true)
-
-    // Check if checkboxes are rendered
-    const checkboxes = wrapper.findAllComponents(NCheckbox)
-    expect(checkboxes.length).toBe(3)
-
-    // Check content and state
-    expect(checkboxes?.[0]?.text()).toBe('wait')
-    expect(checkboxes?.[0]?.props('checked')).toBe(true)
-
-    expect(checkboxes?.[1]?.text()).toBe('talk')
-    expect(checkboxes?.[1]?.props('checked')).toBe(false)
+    expect(checkboxes[1]!.attributes('aria-checked')).toBe('true')
   })
 
-  it('emits toggle event when a checkbox is clicked', async () => {
-    const wrapper = mount(AnimationPanel as any, {
-      props: {
-        animations: mockAnimations,
-      },
-      global: {
-        components: { NButton, NCheckbox, NScrollbar },
-      },
-    })
-
-    const checkboxes = wrapper.findAllComponents(NCheckbox)
-
-    // Toggle the second checkbox ('talk')
-    await checkboxes?.[1]?.vm.$emit('update:checked', true)
-
-    expect(wrapper.emitted('toggle') as any[]).toBeTruthy()
-    expect((wrapper.emitted('toggle') as any[])[0]).toEqual([1, true]) // trackIndex: 1, checked: true
+  it('emits the animation track index when a checkbox is clicked', async () => {
+    const wrapper = mount(AnimationPanel, { props: { animations } })
+    await wrapper.findAll('[role="checkbox"]')[1]!.trigger('click')
+    expect(wrapper.emitted('toggle')).toEqual([[4, true]])
+    await wrapper.findAll('[role="checkbox"]')[0]!.trigger('click')
+    expect(wrapper.emitted('toggle')![1]).toEqual([0, false])
   })
 
-  it('emits reset event when Reset button is clicked', async () => {
-    const wrapper = mount(AnimationPanel as any, {
-      props: {
-        animations: mockAnimations,
-      },
-      global: {
-        components: { NButton, NCheckbox, NScrollbar },
-      },
-    })
-
-    const buttons = wrapper.findAllComponents(NButton)
-    // The first button is Reset
-    await buttons?.[0]?.trigger('click')
-
-    expect(wrapper.emitted('reset')).toBeTruthy()
-  })
-
-  it('emits close event when Close button is clicked', async () => {
-    const wrapper = mount(AnimationPanel as any, {
-      props: {
-        animations: mockAnimations,
-      },
-      global: {
-        components: { NButton, NCheckbox, NScrollbar },
-      },
-    })
-
-    const buttons = wrapper.findAllComponents(NButton)
-    // The second button is Close
-    await buttons?.[1]?.trigger('click')
-
-    expect(wrapper.emitted('close')).toBeTruthy()
+  it('emits reset and close actions', async () => {
+    const wrapper = mount(AnimationPanel, { props: { animations } })
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'リセット')!
+      .trigger('click')
+    expect(wrapper.emitted('reset')).toEqual([[]])
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === '閉じる')!
+      .trigger('click')
+    expect(wrapper.emitted('close')).toEqual([[]])
   })
 })

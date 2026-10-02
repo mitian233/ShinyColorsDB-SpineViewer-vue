@@ -11,8 +11,6 @@ export default tseslint.config(
       'coverage/**',
       'node_modules/**',
       'public/**',
-      'auto-imports.d.ts',
-      'components.d.ts',
     ],
   },
   eslint.configs.recommended,

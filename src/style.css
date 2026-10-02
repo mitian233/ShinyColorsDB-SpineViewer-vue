@@ -1,8 +1,13 @@
 @import 'tailwindcss';
 
 :root {
-  font-family: 'LINESEED', 'Meiryo', Arial, Helvetica, sans-serif;
+  --sc-font:
+    'SCUI Preview Humming', 'SCUI Preview Qingyin', 'Hiragino Kaku Gothic ProN', 'Yu Gothic',
+    'Meiryo', sans-serif;
+  font-family: var(--sc-font);
   color-scheme: light dark;
+  color: var(--sc-ink);
+  background: var(--sc-surface);
 }
 
 * {
@@ -20,4 +25,62 @@ body {
 #app {
   width: 100vw;
   height: 100dvh;
+}
+
+.viewer-divider {
+  width: 100%;
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid var(--sc-line);
+}
+
+.sc-select__content {
+  max-width: calc(100vw - 24px);
+}
+
+.sc-select__trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-select__item > span:first-child {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sc-ink: #eee5f3;
+    --sc-ink-muted: #bfb1cc;
+    --sc-line: #53455e;
+    --sc-surface: #26202e;
+    --sc-pink-light: #49263e;
+    --sc-pink-dark: #ffb5df;
+    --sc-blue: #8dbaf0;
+    --sc-focus: 0 0 0 3px #26202e, 0 0 0 5px #ff7ac5;
+  }
+
+  .sc-input,
+  .sc-select__content,
+  .sc-select__trigger {
+    color: var(--sc-ink);
+    background: var(--sc-surface);
+  }
+
+  .sc-input[aria-invalid='true'] {
+    background: #462638;
+  }
+
+  .sc-input:disabled {
+    background: #322a3c;
+  }
+
+  .sc-button--secondary {
+    color: #615365;
+  }
+
+  .sc-field-error {
+    color: #ff9cc0;
+  }
 }
