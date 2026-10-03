@@ -15,9 +15,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@mitian233/scui": "^0.1.0",
     "pinia": "^3.0.4",
     "reka-ui": "^2.10.5",
-    "shiny-colors-ui": "file:vendor/shiny-colors-ui-0.1.0.tgz",
     "vue": "^3.5.25",
     "vue-router": "^5.0.3"
   },

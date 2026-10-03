@@ -8,15 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@mitian233/scui':
+        specifier: ^0.1.0
+        version: 0.1.0(reka-ui@2.10.5(vue@3.5.29(typescript@5.9.3)))(vue@3.5.29(typescript@5.9.3))
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.9.3)(vue@3.5.29(typescript@5.9.3))
       reka-ui:
         specifier: ^2.10.5
         version: 2.10.5(vue@3.5.29(typescript@5.9.3))
-      shiny-colors-ui:
-        specifier: file:vendor/shiny-colors-ui-0.1.0.tgz
-        version: file:vendor/shiny-colors-ui-0.1.0.tgz(reka-ui@2.10.5(vue@3.5.29(typescript@5.9.3)))(vue@3.5.29(typescript@5.9.3))
       vue:
         specifier: ^3.5.25
         version: 3.5.29(typescript@5.9.3)
@@ -509,6 +509,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@mitian233/scui@0.1.0':
+    resolution: {integrity: sha512-U9aJVSIb6NAjGTTq0mzaPTYtuVenRWZ0twMNxqtMP5Sze5+AvSUkzAnqxu7/dPciWo2u7WXs/xiW9Bs5Zmpnwg==}
+    peerDependencies:
+      reka-ui: ^2.0.0
+      vue: ^3.5.0
 
   '@napi-rs/wasm-runtime@1.1.1':
     resolution: {integrity: sha512-p64ah1M1ld8xjWv3qbvFwHiFVWrq1yFvV4f7w+mzaqiR4IlSgkqhcRdHwsGgomwzBH51sRY4NEowLxnaBjcW/A==}
@@ -1854,13 +1860,6 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shiny-colors-ui@file:vendor/shiny-colors-ui-0.1.0.tgz:
-    resolution: {integrity: sha512-nR9K13EicqDKUOLpI+/hpaZfO4cxvv7LGdo0mVfUOpJOYYaXYW7Lx+HMzzROqxrKx/CAPcnZADnDDH84l9hnuQ==, tarball: file:vendor/shiny-colors-ui-0.1.0.tgz}
-    version: 0.1.0
-    peerDependencies:
-      reka-ui: ^2.0.0
-      vue: ^3.5.0
-
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
@@ -2620,6 +2619,11 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@mitian233/scui@0.1.0(reka-ui@2.10.5(vue@3.5.29(typescript@5.9.3)))(vue@3.5.29(typescript@5.9.3))':
+    dependencies:
+      reka-ui: 2.10.5(vue@3.5.29(typescript@5.9.3))
+      vue: 3.5.29(typescript@5.9.3)
 
   '@napi-rs/wasm-runtime@1.1.1':
     dependencies:
@@ -3916,11 +3920,6 @@ snapshots:
       shebang-regex: 3.0.0
 
   shebang-regex@3.0.0: {}
-
-  shiny-colors-ui@file:vendor/shiny-colors-ui-0.1.0.tgz(reka-ui@2.10.5(vue@3.5.29(typescript@5.9.3)))(vue@3.5.29(typescript@5.9.3)):
-    dependencies:
-      reka-ui: 2.10.5(vue@3.5.29(typescript@5.9.3))
-      vue: 3.5.29(typescript@5.9.3)
 
   siginfo@2.0.0: {}
 

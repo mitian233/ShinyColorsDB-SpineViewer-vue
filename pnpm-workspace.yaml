@@ -1,3 +1,5 @@
 allowBuilds:
   esbuild: true
   vue-demi: true
+minimumReleaseAgeExclude:
+  - '@mitian233/scui@0.1.0'

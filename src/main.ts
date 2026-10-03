@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import 'shiny-colors-ui/style.css'
+import '@mitian233/scui/style.css'
 import './style.css'
 
 const app = createApp(App)

@@ -4,20 +4,17 @@
 
 ## 组件库
 
-界面使用本地 SCUI（Vue 3 + Reka UI）组件库，源项目位于相邻目录 `../scui`。
-已构建的组件包保存在 `vendor/shiny-colors-ui-0.1.0.tgz`，通过 `file:` 依赖安装，
-克隆本仓库后不需要额外克隆 SCUI。
+界面使用 npm 上的 [@mitian233/scui](https://www.npmjs.com/package/@mitian233/scui)（Vue 3 + Reka UI）组件库。
+安装依赖时由 pnpm 从 npm 获取，无需相邻的 SCUI 源项目或本地包文件。
 
-SCUI 更新后，在其项目中运行 `npm run build`，再在本项目中更新组件包和锁文件：
+SCUI 发布新版本后，更新 `package.json` 中的版本并运行：
 
 ```sh
-npm pack ../scui --pack-destination ./vendor --ignore-scripts
-pnpm install --force
+pnpm install
 pnpm build
 ```
 
-若 SCUI 版本号变化，同时更新 `package.json` 中的包文件路径。按钮、普通选择框、开关、
-复选框、弹窗和加载提示直接使用 SCUI；衣装分组选择与抽屉使用 Reka UI 配合 SCUI 样式，
+按钮、普通选择框、开关、复选框、弹窗和加载提示直接使用 SCUI；衣装分组选择与抽屉使用 Reka UI 配合 SCUI 样式，
 颜色选择器提供原生取色和十六进制输入。系统深色模式通过全局主题变量适配。
 
 ## 表示言語と Webfont

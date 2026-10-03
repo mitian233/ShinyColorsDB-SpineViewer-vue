@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ScPanel, ScButton } from 'shiny-colors-ui'
+import { ScPanel, ScButton } from '@mitian233/scui'
 
 withDefaults(defineProps<{ title: string; tone?: 'error' | 'success'; closable?: boolean }>(), {
   tone: 'error',

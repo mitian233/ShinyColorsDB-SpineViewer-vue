@@ -21,7 +21,7 @@ export default defineConfig({
           groups: [
             {
               name: 'scui',
-              test: /[\\/]node_modules[\\/](?:shiny-colors-ui|reka-ui)[\\/]/,
+              test: /[\\/]node_modules[\\/](?:@mitian233[\\/]scui|reka-ui)[\\/]/,
               priority: 20,
             },
           ],

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ScButton, ScSelect, ScSwitch } from 'shiny-colors-ui'
+import { ScButton, ScSelect, ScSwitch } from '@mitian233/scui'
 import ViewerDressSelect from './ViewerDressSelect.vue'
 import ViewerColorPicker from './ViewerColorPicker.vue'
 import type { ViewerSelectGroupOption, ViewerSelectOption } from '../composables/useViewerShared'

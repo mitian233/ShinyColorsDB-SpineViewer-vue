@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue'
-import { ScInput } from 'shiny-colors-ui'
+import { ScInput } from '@mitian233/scui'
 
 const model = defineModel<string>({ required: true })
 const draft = shallowRef(model.value)

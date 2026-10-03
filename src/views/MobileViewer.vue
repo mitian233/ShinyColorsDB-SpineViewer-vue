@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { ScButton, ScLoader } from 'shiny-colors-ui'
+import { ScButton, ScLoader } from '@mitian233/scui'
 import ViewerDrawer from '../components/ViewerDrawer.vue'
 import ViewerFeedback from '../components/ViewerFeedback.vue'
 import ViewerNotice from '../components/ViewerNotice.vue'

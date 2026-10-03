@@ -15,7 +15,7 @@ import {
   SelectItemText,
   SelectItemIndicator,
 } from 'reka-ui'
-import { ScIcon } from 'shiny-colors-ui'
+import { ScIcon } from '@mitian233/scui'
 import type { ViewerSelectGroupOption } from '../composables/useViewerShared'
 
 defineProps<{ groups: ViewerSelectGroupOption[] }>()

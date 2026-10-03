@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogClose,
 } from 'reka-ui'
-import { ScImageButton } from 'shiny-colors-ui'
+import { ScImageButton } from '@mitian233/scui'
 import { useOverlayFocus } from '../composables/useOverlayFocus'
 
 withDefaults(defineProps<{ title: string; placement?: 'left' | 'right' | 'bottom' }>(), {

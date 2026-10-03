@@ -1,6 +1,6 @@
 import { mount, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { afterEach, describe, it, expect } from 'vitest'
-import { ScSelect } from 'shiny-colors-ui'
+import { ScSelect } from '@mitian233/scui'
 import ViewerControls from '../ViewerControls.vue'
 import ViewerDressSelect from '../ViewerDressSelect.vue'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ScButton, ScCheckbox } from 'shiny-colors-ui'
+import { ScButton, ScCheckbox } from '@mitian233/scui'
 import type { AnimationItem } from '../types'
 
 const props = defineProps<{ animations: AnimationItem[] }>()

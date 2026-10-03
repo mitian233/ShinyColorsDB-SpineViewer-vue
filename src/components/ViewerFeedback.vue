@@ -8,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogAction,
 } from 'reka-ui'
-import { ScButton, ScDialog } from 'shiny-colors-ui'
+import { ScButton, ScDialog } from '@mitian233/scui'
 import ViewerNotice from './ViewerNotice.vue'
 import { useOverlayFocus } from '../composables/useOverlayFocus'
 
